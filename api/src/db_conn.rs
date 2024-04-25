@@ -5,28 +5,41 @@ use log::debug;
 
 pub const HABITS_KEY: &str = "habits";
 pub const HABITS_CHECK_KEY: &str = "habits_check";
-pub const DEF_RSP: &str = "{\"status\": \"ok\"}";
+
+// a dictionary with a single key-value pair: "status": "ok"
+#[derive(Serialize, Deserialize)]
+pub struct DefaultResponse {
+    pub status: String
+}
+impl Default for DefaultResponse {
+    fn default() -> Self {
+        DefaultResponse {
+            status: "ok".to_string()
+        }
+    }
+}
+
 
 #[derive(Serialize, Deserialize)]
 pub struct Habit {
-    pub(crate) id: String,
-    pub(crate) name: String,
-    pub(crate) description: String,
-    pub(crate) create_dt: DateTime<Utc>,
-    pub(crate) frequency: String,
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub create_dt: DateTime<Utc>,
+    pub frequency: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct NewHabit {
-    pub(crate) name: String,
-    pub(crate) description: String,
-    pub(crate) frequency: String,
+    pub name: String,
+    pub description: String,
+    pub frequency: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct HabitCheckList {
-    pub(crate) id: String,
-    pub(crate) check_dt: Vec<DateTime<Utc>>,
+    pub id: String,
+    pub check_dt: Vec<DateTime<Utc>>,
 }
 
 pub async fn test_redis() -> redis::RedisResult<()> {

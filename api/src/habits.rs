@@ -1,30 +1,27 @@
 use log::{debug,warn,info,error};
 use actix_web::Responder;
-use actix_web::web;
+use actix_web::{web, HttpResponse};
 use redis::AsyncCommands;
 use crate::db_conn::{Habit, NewHabit, HabitCheckList,
-                    HABITS_KEY, DEF_RSP, HABITS_CHECK_KEY};
+                    HABITS_KEY, DefaultResponse, HABITS_CHECK_KEY};
 use uuid::Uuid;
 
 pub async fn get_habits(conn: web::Data<redis::Client>) -> impl Responder {
+    info!("Getting habits");
     let mut habits: Vec<Habit> = Vec::new();
 
     let mut con = match conn.get_multiplexed_tokio_connection().await {
         Ok(con) => con,
         Err(_) => {
             error!("Failed to get connection to Redis");
-            return web::Json(habits)
-                        .customize()
-                        .with_status(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR)
+            return HttpResponse::InternalServerError().json(habits)
         }
     };
     let habit_strs: Vec<String> = match con.hvals(&HABITS_KEY).await {
         Ok(habit_strs) => habit_strs,
         Err(_) => {
             warn!("{} key not found in Redis", HABITS_KEY);
-            return web::Json(habits)
-                .customize()
-                .with_status(actix_web::http::StatusCode::OK)
+            return HttpResponse::Ok().json(habits)
         }
     };
 
@@ -34,22 +31,19 @@ pub async fn get_habits(conn: web::Data<redis::Client>) -> impl Responder {
             Ok(habit) => habit,
             Err(_) => {
                 error!("Failed to parse habit: {}", habit_str);
-                return web::Json(habits)
-                    .customize()
-                    .with_status(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR)
+                return HttpResponse::InternalServerError().json(habits)
             }
         };
         debug!("Retreived Habit: {:?}", habit.id);
         habits.push(habit);
     }
 
-    web::Json(habits)
-        .customize()
-        .with_status(actix_web::http::StatusCode::OK)
+    HttpResponse::Ok().json(habits)
 }
 
 pub async fn create_habit(habit: web::Json<NewHabit>, conn: web::Data<redis::Client>) -> impl Responder {
     let mut con = conn.get_multiplexed_tokio_connection().await.expect("Connection failed");
+    debug!("Creating habit: {:?}", habit.name);
     let id: String = Uuid::new_v4().to_string();
     let habit = Habit {
         id: id.clone(),
@@ -59,6 +53,7 @@ pub async fn create_habit(habit: web::Json<NewHabit>, conn: web::Data<redis::Cli
         frequency: habit.frequency.clone(),
     };
     let habit = serde_json::to_string(&habit).expect("Failed to serialize habit");
+    debug!("Writing habit: {:?}", habit);
     let _: () = con.hset(&HABITS_KEY, id.clone(), habit).await.expect("Failed to write habit");
     // now create a corresponding check record
     let habit_check = HabitCheckList {
@@ -66,12 +61,11 @@ pub async fn create_habit(habit: web::Json<NewHabit>, conn: web::Data<redis::Cli
         check_dt: Vec::new(),
     };
     let habit_check = serde_json::to_string(&habit_check).expect("Failed to serialize habit check");
+    debug!("Writing habit check: {:?}", habit_check);
     let _: () = con.hset(&HABITS_CHECK_KEY, id, habit_check).await.expect("Failed to write habit check");
-
+    
     // return the default response and status code CREATED
-    web::Json(DEF_RSP)
-        .customize()
-        .with_status(actix_web::http::StatusCode::CREATED)
+    HttpResponse::Created().json(DefaultResponse::default())
 }
 
 pub async fn get_habit(habit_id: web::Path<String>, redis: web::Data<redis::Client>) -> impl Responder {
@@ -80,9 +74,7 @@ pub async fn get_habit(habit_id: web::Path<String>, redis: web::Data<redis::Clie
     let habit: String = con.hget(&HABITS_KEY, &id).await.expect("Failed to read habit");
     let habit: Habit = serde_json::from_str(&habit).expect("Failed to parse habit");
 
-    web::Json(habit)
-        .customize()
-        .with_status(actix_web::http::StatusCode::OK)
+    HttpResponse::Ok().json(habit)
 }
 
 pub async fn delete_habit(habit_id: web::Path<String>, redis: web::Data<redis::Client>) -> impl Responder {
@@ -90,9 +82,7 @@ pub async fn delete_habit(habit_id: web::Path<String>, redis: web::Data<redis::C
     let id: String = habit_id.into_inner();
     let _: () = con.hdel(&HABITS_KEY, &id).await.expect("Failed to delete habit");
 
-    web::Json(DEF_RSP)
-        .customize()
-        .with_status(actix_web::http::StatusCode::OK)
+    HttpResponse::Ok().json(DefaultResponse::default())
 }
 
 pub async fn check_habit(habit_id: web::Path<String>, redis: web::Data<redis::Client>) -> impl Responder {
@@ -109,9 +99,7 @@ pub async fn check_habit(habit_id: web::Path<String>, redis: web::Data<redis::Cl
     let habit_check = serde_json::to_string(&habit_check).expect("Failed to serialize habit check");
     let _: () = con.hset(&HABITS_CHECK_KEY, id, habit_check).await.expect("Failed to write habit check");
 
-    web::Json(DEF_RSP)
-        .customize()
-        .with_status(actix_web::http::StatusCode::OK)
+    HttpResponse::Ok().json(DefaultResponse::default())
 }
 
 pub async fn list_habit_checks(habit_id: web::Path<String>, redis: web::Data<redis::Client>) -> impl Responder {
@@ -122,7 +110,5 @@ pub async fn list_habit_checks(habit_id: web::Path<String>, redis: web::Data<red
     let habit_check: String = con.hget(&HABITS_CHECK_KEY, &id).await.expect("Failed to read habit check");
     let habit_check: HabitCheckList = serde_json::from_str(&habit_check).expect("Failed to parse habit check");
 
-    web::Json(habit_check)
-        .customize()
-        .with_status(actix_web::http::StatusCode::OK)
+    HttpResponse::Ok().json(habit_check)
 }

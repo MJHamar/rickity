@@ -1,6 +1,6 @@
-mod api;
-mod db_conn;
-mod habits;
+// mod api;
+// mod db_conn;
+// mod habits;
 
 use simple_logger::{SimpleLogger, set_up_color_terminal};
 
@@ -12,5 +12,5 @@ fn main() {
     log::set_max_level(max_level);
     log::set_boxed_logger(Box::new(logger)).unwrap();
 
-    api::serve().unwrap();
+    api::api::serve().unwrap();
 }
