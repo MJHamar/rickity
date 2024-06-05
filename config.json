@@ -1,0 +1,17 @@
+{
+    "directories": [
+        {
+            "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+            "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+            "include" : [
+                "blogpost.md"
+            ],
+            "include_patterns": [
+                "assets/*"
+            ],
+            "ignore_patterns": [
+                ".*"
+            ]
+        }
+    ]
+}

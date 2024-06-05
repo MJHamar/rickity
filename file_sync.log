@@ -1,0 +1,123 @@
+2024-05-25 10:54:11,885 - INFO - Starting file sync...
+2024-05-25 10:54:11,885 - INFO - Directories: [
+  {
+    "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+    "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+    "include": [
+      "blogpost.md"
+    ],
+    "include_patterns": [
+      ".*/assets/*\\.png"
+    ],
+    "ignore_patterns": [
+      ".*"
+    ]
+  }
+]
+2024-05-25 10:54:11,885 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 10:54:14,539 - INFO - Source: /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg, Target: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report, Include: ['blogpost.md'], Include Patterns: ['.*/assets/*\\.png'], Ignore Patterns: ['.*']
+2024-05-25 10:55:46,245 - INFO - Stopping observers...
+2024-05-25 10:55:49,983 - INFO - Starting file sync...
+2024-05-25 10:55:49,983 - INFO - Directories: [
+  {
+    "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+    "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+    "include": [
+      "blogpost.md"
+    ],
+    "include_patterns": [
+      "assets/*"
+    ],
+    "ignore_patterns": [
+      ".*"
+    ]
+  }
+]
+2024-05-25 10:55:49,984 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 10:55:51,046 - INFO - Source: /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg, Target: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report, Include: ['blogpost.md'], Include Patterns: ['assets/*'], Ignore Patterns: ['.*']
+2024-05-25 10:55:54,315 - INFO - Hard link created:
+/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg/assets/asd.png
+->
+/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asd.png
+2024-05-25 10:57:11,640 - INFO - Stopping observers...
+2024-05-25 11:00:51,089 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 11:07:10,530 - INFO - Starting file sync...
+2024-05-25 11:07:10,531 - INFO - Directories: [
+  {
+    "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+    "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+    "include": [
+      "blogpost.md"
+    ],
+    "include_patterns": [
+      "assets/*"
+    ],
+    "ignore_patterns": [
+      ".*"
+    ]
+  }
+]
+2024-05-25 11:07:10,531 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 11:07:13,557 - INFO - Periodic check for % and %s done.
+2024-05-25 11:07:13,557 - INFO - Source: /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg, Target: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report, Include: ['blogpost.md'], Include Patterns: ['assets/*'], Ignore Patterns: ['.*']
+2024-05-25 11:09:34,096 - INFO - Hard link created:
+/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg/assets/asdf.png
+->
+/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:12:13,569 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 11:12:14,696 - INFO - Periodic check for % and %s done.
+2024-05-25 11:12:17,621 - INFO - Stopping observers...
+2024-05-25 11:12:38,561 - INFO - Starting file sync...
+2024-05-25 11:12:38,562 - INFO - Directories: [
+  {
+    "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+    "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+    "include": [
+      "blogpost.md"
+    ],
+    "include_patterns": [
+      "assets/*"
+    ],
+    "ignore_patterns": [
+      ".*"
+    ]
+  }
+]
+2024-05-25 11:12:38,562 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 11:12:39,621 - INFO - Periodic check for % and %s done.
+2024-05-25 11:12:39,622 - INFO - Source: /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg, Target: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report, Include: ['blogpost.md'], Include Patterns: ['assets/*'], Ignore Patterns: ['.*']
+2024-05-25 11:13:29,588 - INFO - Hard link created:
+/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg/assets/asdf.png
+->
+/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:14:20,182 - INFO - Stopping observers...
+2024-05-25 11:14:31,655 - INFO - Starting file sync...
+2024-05-25 11:14:31,656 - INFO - Directories: [
+  {
+    "source": "/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg",
+    "target": "/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report",
+    "include": [
+      "blogpost.md"
+    ],
+    "include_patterns": [
+      "assets/*"
+    ],
+    "ignore_patterns": [
+      ".*"
+    ]
+  }
+]
+2024-05-25 11:14:31,656 - INFO - Periodically checking /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg and /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report
+2024-05-25 11:14:34,101 - INFO - Periodic check for % and %s done.
+2024-05-25 11:14:34,101 - INFO - Source: /Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg, Target: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report, Include: ['blogpost.md'], Include Patterns: ['assets/*'], Ignore Patterns: ['.*']
+2024-05-25 11:15:22,129 - INFO - Hard link created:
+/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg/assets/asdf.png
+->
+/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:15:27,323 - INFO - Hard link deleted: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:15:35,860 - INFO - Hard link created:
+/Users/hamarmiklos/Desktop/Egyetem/uva/adapt_med_seg/assets/asdf.png
+->
+/Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:15:38,845 - INFO - Hard link deleted: /Users/hamarmiklos/Google Drive/My Drive/Egyetem/Amsterdam/Courses/Deep Learning 2/report/assets/asdf.png
+2024-05-25 11:18:45,408 - INFO - Stopping observers...
