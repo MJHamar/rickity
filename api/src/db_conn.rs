@@ -39,6 +39,7 @@ pub struct NewHabit {
 #[derive(Serialize, Deserialize)]
 pub struct HabitCheckList {
     pub id: String,
+    #[serde(with = "crate::util::datetime_util")]
     pub check_dt: Vec<DateTime<Utc>>,
 }
 

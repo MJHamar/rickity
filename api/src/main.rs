@@ -6,7 +6,7 @@ use simple_logger::{SimpleLogger, set_up_color_terminal};
 
 fn main() {
     set_up_color_terminal();
-    
+
     let logger = SimpleLogger::new();
     let max_level = log::Level::Debug.to_level_filter();
     log::set_max_level(max_level);

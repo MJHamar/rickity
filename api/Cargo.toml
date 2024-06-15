@@ -11,6 +11,7 @@ path = "./src/lib.rs"
 
 [dependencies]
 actix-web = "4.0"
+actix-cors = "0.6"
 redis = { version = "0.25.3", features = ["aio", "tokio-comp"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

@@ -1,7 +1,7 @@
 use log::{debug,warn,info,error};
 use actix_web::Responder;
 use actix_web::{web, HttpResponse};
-use redis::AsyncCommands;
+use redis::{AsyncCommands, RedisError};
 use crate::db_conn::{Habit, NewHabit, HabitCheckList,
                     HABITS_KEY, DefaultResponse, HABITS_CHECK_KEY};
 use uuid::Uuid;
@@ -90,25 +90,44 @@ pub async fn check_habit(habit_id: web::Path<String>, redis: web::Data<redis::Cl
     let id: String = habit_id.into_inner();
 
     // get the habit check object corr. to the ID.
-    let habit_check: String = con.hget(&HABITS_CHECK_KEY, &id).await.expect("Failed to read habit check");
-    let mut habit_check: HabitCheckList = serde_json::from_str(&habit_check).expect("Failed to parse habit check");
+    let habit_check: Result<String, RedisError> = con.hget(&HABITS_CHECK_KEY, &id).await;
+    let mut habit_check: HabitCheckList = match habit_check {
+        Ok(habit_check) => serde_json::from_str(&habit_check).expect("Failed to parse habit check"),
+        Err(_) => HabitCheckList {
+            id: id.clone(),
+            check_dt: Vec::new(),
+        }
+    };
     // append the current time to the check_dt list
     habit_check.check_dt.push(chrono::Utc::now());
 
     // write the updated habit check object back to Redis
     let habit_check = serde_json::to_string(&habit_check).expect("Failed to serialize habit check");
-    let _: () = con.hset(&HABITS_CHECK_KEY, id, habit_check).await.expect("Failed to write habit check");
+    let _: () = con.hset(&HABITS_CHECK_KEY, id.clone(), habit_check).await.expect("Failed to write habit check");
 
-    HttpResponse::Ok().json(DefaultResponse::default())
+    let habit_check_list = _list_habit_checks(id, redis.get_ref()).await;
+    HttpResponse::Ok().json(habit_check_list)
 }
 
 pub async fn list_habit_checks(habit_id: web::Path<String>, redis: web::Data<redis::Client>) -> impl Responder {
+    let habit_check_list = _list_habit_checks(habit_id.into_inner(), redis.get_ref()).await;
+    HttpResponse::Ok().json(habit_check_list)
+}
+
+pub async fn _list_habit_checks(id: String, redis: &redis::Client) -> HabitCheckList
+{
     let mut con = redis.get_multiplexed_tokio_connection().await.expect("Connection failed");
-    let id: String = habit_id.into_inner();
 
     // get the habit check object corr. to the ID.
-    let habit_check: String = con.hget(&HABITS_CHECK_KEY, &id).await.expect("Failed to read habit check");
-    let habit_check: HabitCheckList = serde_json::from_str(&habit_check).expect("Failed to parse habit check");
-
-    HttpResponse::Ok().json(habit_check)
+    // if it doesn't exist, initialise a new one
+    let habit_check: Result<String, RedisError> = con.hget(&HABITS_CHECK_KEY, &id).await;
+    log::debug!("Habit check: {:?}", habit_check);
+    let habit_check: HabitCheckList = match habit_check {
+        Ok(habit_check) => serde_json::from_str(&habit_check).expect("Failed to parse habit check"),
+        Err(_) => HabitCheckList {
+            id: id.clone(),
+            check_dt: Vec::new(),
+        }
+    };
+    habit_check
 }
