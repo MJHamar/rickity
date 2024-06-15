@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api_url from '../config';
 
 const AddHabit = () => {
     const [name, setName] = useState('');
@@ -6,7 +7,7 @@ const AddHabit = () => {
     const [frequency, setFrequency] = useState('');
 
     const handleSubmit = async (event) => {
-        event.preventDefault();
+        // event.preventDefault();
 
         const habit = {
             name: name,
@@ -16,7 +17,7 @@ const AddHabit = () => {
         };
 
         try {
-            const response = await fetch('http://127.0.0.1:3140/habits', {
+            const response = await fetch(`${api_url}/habits`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

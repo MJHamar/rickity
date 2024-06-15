@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Habit from './Habit'; // Import the Habit component
+import { api_url } from '../config';
 
 const HabitsList = () => {
     const [habits, setHabits] = useState([]);
@@ -7,7 +8,7 @@ const HabitsList = () => {
     useEffect(() => {
         const fetchHabits = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:3140/habits');
+                const response = await fetch(`${api_url}/habits`);
                 if (response.ok) {
                     const data = await response.json();
                     setHabits(data);

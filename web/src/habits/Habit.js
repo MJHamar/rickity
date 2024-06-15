@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Habit.css';
+import { api_url } from '../config';
 
 const Habit = ({ habit }) => {
     const [checkDetails, setCheckDetails] = useState(null);
@@ -7,7 +8,8 @@ const Habit = ({ habit }) => {
     useEffect(() => {
         const fetchCheckDetails = async () => {
             try {
-                const response = await fetch(`http://127.0.0.1:3140/habits/${habit.id}/check`);
+
+                const response = await fetch(`${api_url}/habits/${habit.id}/check`);
                 if (response.ok) {
                     const data = await response.json();
                     setCheckDetails(data);
@@ -41,7 +43,7 @@ const Habit = ({ habit }) => {
         event.preventDefault();
 
         try {
-            const response = await fetch(`http://127.0.0.1:3140/habits/${habit.id}/check`, {
+            const response = await fetch(`${api_url}/habits/${habit.id}/check`, {
                 method: 'POST'
             });
             if (response.ok) {

@@ -43,13 +43,13 @@ pub struct HabitCheckList {
     pub check_dt: Vec<DateTime<Utc>>,
 }
 
-pub async fn test_redis() -> redis::RedisResult<()> {
-    let client = redis::Client::open("redis://127.0.0.1/")?;
+pub async fn test_redis(params: String) -> redis::RedisResult<()> {
+    let client = redis::Client::open(params)?;
     let mut con = client.get_multiplexed_async_connection().await?;
-    
+
     // Set a key
     let _: () = con.set("test_key", "test_value").await?;
-    
+
     // Get a key
     let result: String = con.get("test_key").await?;
     assert_eq!(result, "test_value");
