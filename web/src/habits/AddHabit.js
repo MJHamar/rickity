@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api_url from '../config';
+import { api_url } from '../config';
 
 const AddHabit = () => {
     const [name, setName] = useState('');
