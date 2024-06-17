@@ -61,6 +61,8 @@ const Habit = ({ habit }) => {
     return (
         <div className="habit" style={divStyle} onClick={handleCheck}>
             <h2>{habit.name}</h2>
+            
+            <div className="habitCount">{checkDetails == null ? 0 : checkDetails.check_dt.length}</div>
         </div>
     );
 };

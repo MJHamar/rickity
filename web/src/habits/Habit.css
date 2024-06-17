@@ -24,3 +24,12 @@
     background-color: #d0d0d0;
     /* Even darker background on click */
 }
+
+.habitCount {
+    /* Larger font size */
+    font-size: 1.5em;
+    /* Bold text */;
+    font-weight: bold;
+    /* Black */
+    color: #000000;
+}
