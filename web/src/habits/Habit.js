@@ -30,7 +30,7 @@ const Habit = ({ habit }) => {
         : 'Never';
     // if lastCheckTime is not Never and the last check was within the repetition interval, set isDue to false
     // otherwise, set isDue to true
-    const checkInterval = habit.frequency === "1" ? 60 * 60 * 1000 : habit.frequency === "2" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+    const checkInterval = habit.frequency === "1" ? 60 * 60 * 1000 : habit.frequency === "2" ? 24 * 60 * 60 * 1000 : habit.frequency === "3" ? 7 * 24 * 60 * 60 * 1000 : 1;
     const isDue = lastCheckTime !== 'Never' && Date.now() - new Date(checkDetails.check_dt[checkDetails.check_dt.length - 1] * 1000) < checkInterval;
     const divStyle = {
         backgroundColor: isDue ? 'lightgreen' : 'lightcoral'
@@ -41,6 +41,10 @@ const Habit = ({ habit }) => {
         // if the response is successful, update the checkDetails state
         // otherwise, log the error
         event.preventDefault();
+        // if not isDue, return
+        if (isDue) {
+            return;
+        }
 
         try {
             const response = await fetch(`${api_url}/habits/${habit.id}/check`, {
@@ -61,7 +65,7 @@ const Habit = ({ habit }) => {
     return (
         <div className="habit" style={divStyle} onClick={handleCheck}>
             <h2>{habit.name}</h2>
-            
+
             <div className="habitCount">{checkDetails == null ? 0 : checkDetails.check_dt.length}</div>
         </div>
     );

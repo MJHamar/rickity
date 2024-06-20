@@ -81,6 +81,7 @@ pub async fn delete_habit(habit_id: web::Path<String>, redis: web::Data<redis::C
     let mut con = redis.get_multiplexed_tokio_connection().await.expect("Connection failed");
     let id: String = habit_id.into_inner();
     let _: () = con.hdel(&HABITS_KEY, &id).await.expect("Failed to delete habit");
+    let _: () = con.hdel(&HABITS_CHECK_KEY, &id).await.expect("Failed to delete habit check");
 
     HttpResponse::Ok().json(DefaultResponse::default())
 }

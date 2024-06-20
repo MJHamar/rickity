@@ -7,7 +7,7 @@ const AddHabit = () => {
     const [frequency, setFrequency] = useState('');
 
     const handleSubmit = async (event) => {
-        // event.preventDefault();
+        event.preventDefault();
 
         const habit = {
             name: name,
@@ -61,6 +61,7 @@ const AddHabit = () => {
                 required
             >
                 <option value="" disabled>Select frequency</option>
+                <option value="0">Any time</option>
                 <option value="1">Hourly</option>
                 <option value="2">Daily</option>
                 <option value="3">Weekly</option>
