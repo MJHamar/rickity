@@ -3,3 +3,4 @@ api/Cargo.lock
 api/target
 api/config.ini
 web/src/config.js
+.vscode
