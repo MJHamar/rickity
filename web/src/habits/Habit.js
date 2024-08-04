@@ -35,6 +35,7 @@ const Habit = ({ habit }) => {
     const divStyle = {
         backgroundColor: isDue ? 'lightgreen' : 'lightcoral'
     };
+    const daysSinceLastCheck = lastCheckTime === 'Never' ? 'Never' : Math.floor((Date.now() - new Date(checkDetails.check_dt[checkDetails.check_dt.length - 1] * 1000)) / (1000 * 60 * 60 * 24));
 
     const handleCheck = async (event) => {
         // make an API call to localhost:3140/habits/:id/check with POST method
@@ -66,7 +67,8 @@ const Habit = ({ habit }) => {
         <div className="habit" style={divStyle} onClick={handleCheck}>
             <h2>{habit.name}</h2>
 
-            <div className="habitCount">{checkDetails == null ? 0 : checkDetails.check_dt.length}</div>
+            <div className="habitCount">Count: {checkDetails == null ? 0 : checkDetails.check_dt.length}</div>
+            <div className="habitCount">Days Since Last: {daysSinceLastCheck}</div>
         </div>
     );
 };
