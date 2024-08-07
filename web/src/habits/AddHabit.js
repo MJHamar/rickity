@@ -7,7 +7,7 @@ const AddHabit = () => {
     const [frequency, setFrequency] = useState('');
 
     const handleSubmit = async (event) => {
-        event.preventDefault();
+        // event.preventDefault();
 
         const habit = {
             name: name,

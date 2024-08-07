@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Habit from './Habit'; // Import the Habit component
 import { api_url } from '../config';
+import './HabitList.css';
 
 const HabitsList = () => {
     const [habits, setHabits] = useState([]);
@@ -24,7 +25,7 @@ const HabitsList = () => {
     }, []);
 
     return (
-        <div>
+        <div className="habit-list">
             <h1>Habits</h1>
             {habits.length === 0 ? (
                 <p>No habits found.</p>
