@@ -1,0 +1,117 @@
+:root {
+    --primary-color: #2c3e50;
+    --completed-color: #27ae60;
+    --uncompleted-color: #e74c3c;
+    --hover-color: #34495e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    background-color: #f5f6fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+nav {
+    background-color: var(--primary-color);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+}
+
+nav a.active {
+    background-color: var(--hover-color);
+    border-radius: 4px;
+}
+
+h1 {
+    margin-bottom: 2rem;
+    color: var(--primary-color);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.habit-cell {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.habit-cell:hover {
+    opacity: 0.8;
+}
+
+.completed {
+    background-color: var(--completed-color);
+}
+
+.uncompleted {
+    background-color: var(--uncompleted-color);
+}
+
+#habits-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.habit-item {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.habit-item:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    th, td {
+        padding: 8px;
+        font-size: 14px;
+    }
+} 
