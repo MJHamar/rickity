@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 from uuid import UUID
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.database import get_db, Base, engine
 from models import Habit, HabitCreate, HabitLog, HabitWithLog
@@ -13,6 +14,19 @@ from utils.logging import setup_logger
 logger = setup_logger(__name__)
 
 app = FastAPI()
+
+# Add this before your route definitions
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://34.118.115.23",     # Production frontend
+        "http://localhost:3000",     # Local development
+        "http://127.0.0.1:3000"     # Local development alternative
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 logger.info("Database tables created")
