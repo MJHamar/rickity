@@ -93,16 +93,32 @@ th {
 }
 
 .habit-item {
-    background-color: white;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     padding: 1rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    cursor: pointer;
-    transition: transform 0.2s;
 }
 
 .habit-item:hover {
     transform: translateY(-2px);
+}
+
+.status-icon {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.completed .status-icon {
+    color: white;
+}
+
+.uncompleted .status-icon {
+    color: white;
+}
+
+.habit-name {
+    color: white;
+    flex-grow: 1;
 }
 
 @media (max-width: 768px) {
