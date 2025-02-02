@@ -1,4 +1,4 @@
-const API_URL = '';  // Empty string for same-origin requests
+const API_URL = 'http://0.0.0.0:2233';  // Empty string for same-origin requests
 
 // Utility functions used across both pages
 const formatDate = (date) => {
