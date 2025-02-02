@@ -13,7 +13,7 @@ $(document).ready(async function() {
 
     async function fetchHabitsForDate(date) {
         try {
-            const response = await fetch(`${API_URL}/habits/due/${formatDate(date)}`);
+            const response = await fetch(`${API_URL}/habits/due?date=${formatDate(date)}`);
             return await response.json();
         } catch (error) {
             console.error('Error fetching habits for date:', error);
