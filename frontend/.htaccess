@@ -1,0 +1,35 @@
+# Prevent directory listing
+Options -Indexes
+
+# Prevent access to files starting with dot (like .git)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Only allow specific file types
+<FilesMatch "^.*\.(html|css|js|png|jpg|jpeg|gif|ico|svg)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Prevent access to package.json and other config files
+<FilesMatch "^(package\.json|package-lock\.json|README\.md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Redirect all requests to index.html except for specific file types
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/.*\.(html|css|js|png|jpg|jpeg|gif|ico|svg)$
+RewriteRule ^(.*)$ /index.html [L]
+
+# Additional security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule> 
