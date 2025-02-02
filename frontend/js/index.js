@@ -29,21 +29,29 @@ $(document).ready(async function() {
     }
 
     async function populateTable(habits) {
+        console.log('Starting populateTable with habits:', habits);
         const tbody = $('#habits-body');
         tbody.empty();
 
         for (let i = 0; i < DAYS_TO_SHOW; i++) {
             const date = new Date();
             date.setDate(date.getDate() - i);
+            console.log(`Processing date: ${formatDate(date)}`);
+            
             const habitLogs = await fetchHabitsForDate(date);
+            console.log('Fetched habit logs:', habitLogs);
             
             const row = $('<tr>');
             row.append(`<td>${formatDate(date)}</td>`);
 
             habits.forEach(habit => {
+                console.log(`Processing habit: ${habit.name} (${habit.id})`);
                 const habitLog = habitLogs.find(log => log.habit.id === habit.id);
+                console.log('Found habit log:', habitLog);
+                
                 const completed = habitLog?.latest_log?.completed || false;
                 const logId = habitLog?.latest_log?.id;
+                console.log(`Status - completed: ${completed}, logId: ${logId}`);
                 
                 const cell = $('<td>', {
                     class: `habit-cell ${completed ? 'completed' : 'uncompleted'}`,
@@ -56,6 +64,7 @@ $(document).ready(async function() {
 
             tbody.append(row);
         }
+        console.log('Finished populating table');
     }
 
     // Event delegation for habit cell clicks
