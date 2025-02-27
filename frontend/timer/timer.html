@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="js/timer.js"></script>
+</head>
+<body>
+    <nav>
+        <a href="../index.html">Home</a>
+        <a href="../frontend/habits/habits.html">Habits Calendar</a>
+        <a href="../frontend/habits/today.html">Today's Habits</a>
+        <a href="timer.html" class="active">Timers</a>
+    </nav>
+    <div class="container">
+        <h1>Timer Dashboard</h1>
+        
+        <!-- Create New Timer Form -->
+        <div class="timer-form">
+            <h2>Create New Timer</h2>
+            <form id="timer-form">
+                <div class="form-group">
+                    <label for="timer-name">Timer Name:</label>
+                    <input type="text" id="timer-name" placeholder="Enter timer name" required>
+                </div>
+                <div class="form-group">
+                    <label for="timer-duration">Duration (seconds or HH:MM:SS):</label>
+                    <input type="text" id="timer-duration" placeholder="Enter duration (e.g. 60 or 00:01:00)" required>
+                </div>
+                <button type="submit">Create Timer</button>
+            </form>
+        </div>
+        
+        <!-- Timer List -->
+        <h2>Available Timers</h2>
+        <div id="timer-list" class="timer-list">
+            <!-- Timer cards will be dynamically inserted here -->
+            <p>Loading timers...</p>
+        </div>
+    </div>
+</body>
+</html> 

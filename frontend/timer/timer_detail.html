@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Detail</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="js/timer_detail.js"></script>
+</head>
+<body>
+    <nav>
+        <a href="../index.html">Home</a>
+        <a href="../frontend/habits/habits.html">Habits Calendar</a>
+        <a href="../frontend/habits/today.html">Today's Habits</a>
+        <a href="timer.html">Timers</a>
+        <a href="#" class="active">Timer Detail</a>
+    </nav>
+    <div class="container">
+        <!-- Timer Display -->
+        <div class="timer-display">
+            <h2 id="timer-name">Loading Timer...</h2>
+            
+            <div class="timer-time" id="timer-time">00:00:00</div>
+            
+            <div class="timer-status" id="timer-status">Loading...</div>
+            
+            <div class="timer-controls">
+                <button id="toggle-button">Continue</button>
+                <button id="reset-button" class="danger">Reset</button>
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <a href="timer.html">&larr; Back to Timer List</a>
+        </div>
+    </div>
+</body>
+</html> 
