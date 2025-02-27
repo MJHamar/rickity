@@ -85,7 +85,7 @@ $(document).ready(function() {
         // Handle incoming messages
         socket.onmessage = function(event) {
             console.log('Message received:', event.data);
-            const parsedMessage = parseTimerMessage(event.data);
+            const parsedMessage = event.data;
             timerState = parsedMessage;
             updateTimerDisplay();
         };
