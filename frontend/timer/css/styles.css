@@ -8,6 +8,11 @@
     --background-color: #f5f6fa;
     --card-color: #ffffff;
     --text-color: #333333;
+    
+    /* Pastel colors for timer backgrounds */
+    --pastel-running: #f0f8ff;  /* Very light blue */
+    --pastel-paused: #ffe4b5;   /* Moccasin (light orange) */
+    --pastel-stopped: #98fb98;  /* Pale green */
 }
 
 * {
@@ -137,6 +142,7 @@ button.danger {
     margin: 20px 0;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
+    transition: background-color 0.5s ease;
 }
 
 .timer-display h2 {

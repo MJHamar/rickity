@@ -27,22 +27,27 @@ $(document).ready(function() {
         
         let statusText = '';
         let statusClass = '';
+        const timerDisplayElement = $('.timer-display');
         
         switch(timerState.timer_status) {
             case 'rolling':
                 statusText = 'Running';
                 statusClass = 'status-rolling';
+                timerDisplayElement.css('background-color', 'var(--pastel-running)');
                 break;
             case 'paused':
                 statusText = 'Paused';
                 statusClass = 'status-paused';
+                timerDisplayElement.css('background-color', 'var(--pastel-paused)');
                 break;
             case 'stopped':
                 statusText = 'Stopped';
                 statusClass = 'status-stopped';
+                timerDisplayElement.css('background-color', 'var(--pastel-stopped)');
                 break;
             default:
                 statusText = timerState.timer_status;
+                timerDisplayElement.css('background-color', 'var(--pastel-running)');
         }
         
         statusElement.text(statusText).addClass(statusClass);
