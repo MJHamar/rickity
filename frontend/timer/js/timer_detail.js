@@ -58,14 +58,11 @@ $(document).ready(function() {
         }
     }
 
-    // Parse WebSocket message format "<timer_state> <timer_status>" (used by timer module)
+    // Parse WebSocket message format "{'timer_state': <timer_state> 'timer_status': <timer_status>}" (used by timer module)
     function parseTimerMessage(message) {
-        const parts = message.trim().split(' ');
-        return {
-            state: parseInt(parts[0], 10),
-            status: parts[1]
-        };
-    } 
+        const parsedMessage = JSON.parse(message);
+        return parsedMessage;
+    }
     
     // Initialize WebSocket connection
     function initializeWebSocket() {
@@ -85,7 +82,7 @@ $(document).ready(function() {
         // Handle incoming messages
         socket.onmessage = function(event) {
             console.log('Message received:', event.data);
-            const parsedMessage = event.data;
+            const parsedMessage = parseTimerMessage(event.data);
             timerState = parsedMessage;
             updateTimerDisplay();
         };
