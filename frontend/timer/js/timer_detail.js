@@ -18,6 +18,7 @@ $(document).ready(function() {
     
     // Update timer display
     function updateTimerDisplay() {
+        console.log('timerState', timerState);
         // Update time display
         $('#timer-time').text(formatTime(timerState.timer_state));
         
