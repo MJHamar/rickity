@@ -15,7 +15,7 @@ class TimerState:
         self.name = name
         self.duration = duration  # Total duration in seconds
         self.remaining = duration  # Remaining time in seconds
-        self.status = "stopped"   # stopped, rolling, paused
+        self.status = "stopped"   # stopped, rolling, paused, finished
         self.subscribers: Set[WebSocket] = set()
         self.start_time: Optional[datetime] = None
         self.pause_time: Optional[datetime] = None
@@ -53,14 +53,14 @@ class TimerManager:
                         
                         # Timer has finished
                         if timer.remaining <= 0:
-                            timer.status = "stopped"
+                            timer.status = "finished"
                             timer.remaining = 0
                         
                         # Notify all subscribers
                         await self._notify_subscribers(timer_id)
                         
-                        # Remove timer if stopped and no subscribers
-                        if timer.status == "stopped" and not timer.subscribers:
+                        # Remove timer if no subscribers (for both stopped and finished statuses)
+                        if (timer.status == "stopped" or timer.status == "finished") and not timer.subscribers:
                             del self.active_timers[timer_id]
                 
                 await asyncio.sleep(1)  # Update every second
@@ -89,7 +89,7 @@ class TimerManager:
             self.active_timers[timer_id].subscribers.remove(websocket)
             
             # Clean up timer if no subscribers and not running
-            if not self.active_timers[timer_id].subscribers and self.active_timers[timer_id].status != "rolling":
+            if not self.active_timers[timer_id].subscribers and self.active_timers[timer_id].status not in ["rolling", "paused"]:
                 del self.active_timers[timer_id]
     
     async def start_timer(self, timer_id: str):
@@ -128,7 +128,7 @@ class TimerManager:
             raise ValueError(f"Timer {timer_id} not found")
         
         timer = self.active_timers[timer_id]
-        timer.status = "stopped"
+        timer.status = "stopped"  # Explicitly set as stopped, not finished
         timer.remaining = timer.duration  # Reset to full duration
         await self._notify_subscribers(timer_id)
     

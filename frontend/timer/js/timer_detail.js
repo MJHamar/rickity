@@ -7,13 +7,52 @@ $(document).ready(function() {
     // WebSocket connection
     let socket = null;
     let timerState = {
-        state: 0,
-        status: 'stopped'
+        timer_state: 0,
+        timer_status: 'stopped'
     };
+    let previousStatus = 'stopped';
     
     // Update UI with timer information
     function updateTimerInfo() {
         $('#timer-name').text(timerName);
+    }
+    
+    // Create fireworks animation
+    function createFireworks() {
+        const fireworksContainer = $('<div class="fireworks"></div>');
+        $('.timer-display').append(fireworksContainer);
+
+        // Create 50 firework particles with random colors and positions
+        for (let i = 0; i < 50; i++) {
+            const xPos = Math.random() * 200 - 100; // Random x position (-100 to 100)
+            const yPos = Math.random() * 200 - 100; // Random y position (-100 to 100)
+            
+            // Random color - festive colors
+            const colors = [
+                '#FF5252', // Red
+                '#FFEB3B', // Yellow
+                '#4CAF50', // Green
+                '#2196F3', // Blue
+                '#E040FB'  // Purple
+            ];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const firework = $('<div class="firework"></div>');
+            firework.css({
+                'background-color': color,
+                '--x': xPos + 'px',
+                '--y': yPos + 'px',
+                'left': '50%',
+                'top': '50%'
+            });
+            
+            fireworksContainer.append(firework);
+        }
+        
+        // Remove fireworks after animation completes
+        setTimeout(() => {
+            fireworksContainer.remove();
+        }, 1500);
     }
     
     // Update timer display
@@ -23,11 +62,19 @@ $(document).ready(function() {
         
         // Update status text and class
         const statusElement = $('#timer-status');
-        statusElement.removeClass('status-rolling status-paused status-stopped');
+        statusElement.removeClass('status-rolling status-paused status-stopped status-finished');
         
         let statusText = '';
         let statusClass = '';
         const timerDisplayElement = $('.timer-display');
+        
+        // If status changed to 'finished' from another status, create fireworks
+        if (timerState.timer_status === 'finished' && previousStatus !== 'finished') {
+            createFireworks();
+        }
+        
+        // Save current status for next comparison
+        previousStatus = timerState.timer_status;
         
         switch(timerState.timer_status) {
             case 'rolling':
@@ -44,6 +91,11 @@ $(document).ready(function() {
                 statusText = 'Stopped';
                 statusClass = 'status-stopped';
                 timerDisplayElement.css('background-color', 'var(--pastel-stopped)');
+                break;
+            case 'finished':
+                statusText = 'Finished!';
+                statusClass = 'status-finished';
+                timerDisplayElement.css('background-color', 'var(--pastel-finished)');
                 break;
             default:
                 statusText = timerState.timer_status;
