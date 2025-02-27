@@ -1,6 +1,21 @@
 $(document).ready(async function() {
     const DAYS_TO_SHOW = 7;
 
+    
+    const toggleHabitLog = async (logId, completed) => {
+        const endpoint = completed ? 'uncheck' : 'check';
+        try {
+            const response = await fetch(`${API_URL}/habits/${endpoint}/${logId}`, {
+                method: 'PUT'
+            });
+            if (!response.ok) throw new Error('Failed to toggle habit');
+            return true;
+        } catch (error) {
+            console.error('Error toggling habit:', error);
+            return false;
+        }
+    }; 
+
     async function fetchHabits() {
         try {
             const response = await fetch(`${API_URL}/habits`);
