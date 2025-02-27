@@ -2,11 +2,12 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from uuid import UUID
 from typing import List, Optional
+
 from utils.logging import setup_logger
 from utils.date_utils import parse_recurrence
-from database.models import Habit, HabitLog
-from models import HabitCreate
-from repositories.habit_log_repository import HabitLogRepository
+from habits.database.models import Habit, HabitLog
+from habits.models import HabitCreate
+from habits.repositories.habit_log_repository import HabitLogRepository
 
 logger = setup_logger(__name__)
 

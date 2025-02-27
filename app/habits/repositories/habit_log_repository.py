@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 from uuid import UUID
 from typing import List, Optional
 from sqlalchemy import func
+
 from utils.logging import setup_logger
 from utils.date_utils import parse_recurrence, end_of_day
-from database.models import Habit, HabitLog
-from models import HabitWithLog
+from habits.database.models import Habit, HabitLog
+from habits.models import HabitWithLog
 
 logger = setup_logger(__name__)
 

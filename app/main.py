@@ -5,10 +5,10 @@ from datetime import datetime
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.database import get_db, Base, engine
-from models import Habit, HabitCreate, HabitLog, HabitWithLog
-from repositories.habit_repository import HabitRepository
-from repositories.habit_log_repository import HabitLogRepository
+from habits.database.database import get_db, Base, engine
+from habits.models import Habit, HabitCreate, HabitLog, HabitWithLog
+from habits.repositories.habit_repository import HabitRepository
+from habits.repositories.habit_log_repository import HabitLogRepository
 from utils.logging import setup_logger
 
 logger = setup_logger(__name__)

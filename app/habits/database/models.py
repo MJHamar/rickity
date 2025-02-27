@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey
 from datetime import datetime
 import uuid
 
-from database.database import Base
+from habits.database.database import Base
 
 class Habit(Base):
     __tablename__ = "habits"
