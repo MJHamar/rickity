@@ -19,7 +19,7 @@ $(document).ready(function() {
     // Update timer display
     function updateTimerDisplay() {
         // Update time display
-        $('#timer-time').text(formatTime(timerState.state));
+        $('#timer-time').text(formatTime(timerState.timer_state));
         
         // Update status text and class
         const statusElement = $('#timer-status');
@@ -42,7 +42,7 @@ $(document).ready(function() {
                 statusClass = 'status-stopped';
                 break;
             default:
-                statusText = timerState.status;
+                statusText = timerState.timer_status;
         }
         
         statusElement.text(statusText).addClass(statusClass);
@@ -54,6 +54,15 @@ $(document).ready(function() {
             $('#toggle-button').text('Continue');
         }
     }
+
+    // Parse WebSocket message format "<timer_state> <timer_status>" (used by timer module)
+    function parseTimerMessage(message) {
+        const parts = message.trim().split(' ');
+        return {
+            state: parseInt(parts[0], 10),
+            status: parts[1]
+        };
+    } 
     
     // Initialize WebSocket connection
     function initializeWebSocket() {
@@ -73,7 +82,7 @@ $(document).ready(function() {
         // Handle incoming messages
         socket.onmessage = function(event) {
             console.log('Message received:', event.data);
-            const parsedMessage = parseTimerMessage(event.data);
+            const parsedMessage = event.data;
             timerState = parsedMessage;
             updateTimerDisplay();
         };

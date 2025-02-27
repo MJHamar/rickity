@@ -17,12 +17,3 @@ function formatTime(seconds) {
     
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
-
-// Parse WebSocket message format "<timer_state> <timer_status>" (used by timer module)
-function parseTimerMessage(message) {
-    const parts = message.trim().split(' ');
-    return {
-        state: parseInt(parts[0], 10),
-        status: parts[1]
-    };
-} 
