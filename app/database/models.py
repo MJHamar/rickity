@@ -18,4 +18,18 @@ class HabitLog(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     habit_id = Column(String, ForeignKey("habits.id"), nullable=False)
     due_date = Column(DateTime, nullable=False)
-    completed = Column(Boolean, default=False) 
+
+class HabitDuration(Base):
+    __tablename__ = "habit_durations"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    habit_id = Column(String, ForeignKey("habits.id"), nullable=False)
+    type = Column(String, nullable=False)  # 'minutes' or 'count'
+    amount = Column(String, nullable=False)  # Storing as string for flexibility
+
+class HabitLogDuration(Base):
+    __tablename__ = "habit_log_durations"
+    
+    habit_log_id = Column(String, ForeignKey("habit_logs.id"), primary_key=True)
+    duration_id = Column(String, ForeignKey("habit_durations.id"), primary_key=True)
+    amount = Column(String, nullable=False) 

@@ -5,3 +5,7 @@ api/config.ini
 web/src/config.js
 .vscode
 **/.venv
+
+# Environment files
+.env
+*.env.local

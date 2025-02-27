@@ -49,15 +49,29 @@ $(document).ready(async function() {
                 const habitLog = habitLogs.find(log => log.habit.id === habit.id);
                 console.log('Found habit log:', habitLog);
                 
-                const completed = habitLog?.latest_log?.completed || false;
-                const logId = habitLog?.latest_log?.id;
-                console.log(`Status - completed: ${completed}, logId: ${logId}`);
+                const durations = habitLog?.latest_log?.durations || [];
+                const sum = durations.reduce((acc, d) => acc + parseInt(d.amount), 0);
+                const goal = parseInt(habit.duration?.amount) || 1;
+                const completed = sum >= goal;
                 
                 const cell = $('<td>', {
                     class: `habit-cell ${completed ? 'completed' : 'uncompleted'}`,
-                    'data-log-id': logId,
-                    'data-completed': completed
-                });
+                    'data-log-id': habitLog?.latest_log?.id,
+                    'data-completed': completed,
+                    'data-duration-type': habit.duration?.type,
+                    'data-goal-amount': goal
+                }).html(`
+                    <div class="progress-container">
+                        <span class="progress-text">${sum}/${goal}</span>
+                        ${durations.map(d => `
+                            <div class="duration-entry" data-duration-id="${d.id}">
+                                ${d.amount}
+                                <button class="remove-duration">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="add-duration">+</button>
+                `);
                 
                 row.append(cell);
             });
@@ -71,11 +85,33 @@ $(document).ready(async function() {
     $('#habits-table').on('click', '.habit-cell', async function() {
         const cell = $(this);
         const logId = cell.data('log-id');
-        const completed = cell.data('completed');
+        const durationType = cell.data('duration-type');
+        const goalAmount = cell.data('goal-amount');
 
-        if (logId && await toggleHabitLog(logId, completed)) {
-            cell.toggleClass('completed uncompleted');
-            cell.data('completed', !completed);
+        if (logId && await addLogDuration(logId, durationType, goalAmount)) {
+            location.reload();
+        }
+    });
+
+    // Event delegation for add duration clicks
+    $('#habits-table').on('click', '.add-duration', async function(e) {
+        e.stopPropagation();
+        const cell = $(this).closest('.habit-cell');
+        const logId = cell.data('log-id');
+        const durationType = cell.data('duration-type');
+        const goalAmount = cell.data('goal-amount');
+        
+        if (await addLogDuration(logId, durationType, goalAmount)) {
+            location.reload();
+        }
+    });
+
+    // Event delegation for remove duration clicks
+    $('#habits-table').on('click', '.remove-duration', async function(e) {
+        e.stopPropagation();
+        const durationId = $(this).closest('.duration-entry').data('duration-id');
+        if (await removeLogDuration(durationId)) {
+            location.reload();
         }
     });
 

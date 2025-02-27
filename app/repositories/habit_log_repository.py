@@ -5,7 +5,7 @@ from typing import List, Optional
 from sqlalchemy import func
 from utils.logging import setup_logger
 from utils.date_utils import parse_recurrence, end_of_day
-from database.models import Habit, HabitLog
+from database.models import Habit, HabitLog, HabitDuration, HabitLogDuration
 from models import HabitWithLog
 
 logger = setup_logger(__name__)
@@ -72,7 +72,6 @@ class HabitLogRepository:
             self.create_due_logs(habit, date)
             
             # Get the most relevant log (first log with due_date >= today)
-            # Compare with end of day
             date_eod = end_of_day(date)
             relevant_log = (self.db.query(HabitLog)
                           .filter(HabitLog.habit_id == habit.id,
@@ -81,9 +80,15 @@ class HabitLogRepository:
                           .first())
             
             if relevant_log:
+                # Get associated durations
+                durations = self.db.query(HabitLogDuration).filter(
+                    HabitLogDuration.habit_log_id == relevant_log.id
+                ).all()
+                
                 habits_with_logs.append(HabitWithLog(
                     habit=habit,
-                    latest_log=relevant_log
+                    latest_log=relevant_log,
+                    durations=[HabitLogDuration.from_orm(d) for d in durations]
                 ))
 
         return habits_with_logs
@@ -101,27 +106,37 @@ class HabitLogRepository:
         logger.info(f"Created habit log with ID: {db_log.id}")
         return db_log
 
-    def complete_habit_log(self, log_id: UUID) -> bool:
-        logger.info(f"Marking habit log {log_id} as completed")
+    def add_log_duration(self, log_id: UUID, amount: str) -> bool:
+        logger.info(f"Adding duration to log {log_id}")
         log_id_str = str(log_id)
         db_log = self.db.query(HabitLog).filter(HabitLog.id == log_id_str).first()
+        
         if db_log:
-            db_log.completed = True
-            self.db.commit()
-            logger.info(f"Habit log {log_id} marked as completed")
-            return True
-        logger.warning(f"Habit log {log_id} not found")
+            # Get the habit's duration
+            duration = self.db.query(HabitDuration).filter(
+                HabitDuration.habit_id == db_log.habit_id
+            ).first()
+            
+            if duration:
+                log_duration = HabitLogDuration(
+                    habit_log_id=log_id_str,
+                    duration_id=duration.id,
+                    amount=str(amount)
+                )
+                self.db.add(log_duration)
+                self.db.commit()
+                return True
         return False
 
-    def uncomplete_habit_log(self, log_id: UUID) -> bool:
-        """Mark a habit log as not completed"""
-        logger.info(f"Marking habit log {log_id} as not completed")
-        log_id_str = str(log_id)
-        db_log = self.db.query(HabitLog).filter(HabitLog.id == log_id_str).first()
-        if db_log:
-            db_log.completed = False
+    def remove_log_duration(self, duration_id: UUID) -> bool:
+        logger.info(f"Removing log duration {duration_id}")
+        duration_id_str = str(duration_id)
+        db_duration = self.db.query(HabitLogDuration).filter(
+            HabitLogDuration.id == duration_id_str
+        ).first()
+        
+        if db_duration:
+            self.db.delete(db_duration)
             self.db.commit()
-            logger.info(f"Habit log {log_id} marked as not completed")
             return True
-        logger.warning(f"Habit log {log_id} not found")
         return False

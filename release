@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Configuration
+CONFIG_FILE="__releases__/config.ini"
+VERSION_FILE=".version"
+
+# Load environment variables
+set -a
+source .env
+set +a
+
+# Read config
+read_ini() {
+    local section="$1"
+    local key="$2"
+    sed -n '/^\['$section'\]/,/^\[/p' "$CONFIG_FILE" | grep "^$key" | cut -d'=' -f2 | tr -d '[:space:]'
+}
+
+HOST=$(read_ini production host)
+USER=$(read_ini production user)
+REPO=$(read_ini production repo)
+DEPLOY_PATH=$(read_ini production deploy_path)
+
+# Step 1: Push to remote
+git push origin main || { echo "Error pushing to repository"; exit 1; }
+
+# SSH connection setup
+SSH_CMD="ssh -i $RELEASE_PK_PATH -o StrictHostKeyChecking=no $USER@$HOST
+
+# Remote execution
+$SSH_CMD << EOF
+set -e
+
+# 2.1 Read current version
+OLD_VERSION=\$(cat $DEPLOY_PATH/$VERSION_FILE)
+
+# 2.2 Pull updates
+cd $DEPLOY_PATH
+git pull origin main
+
+# 2.3 Run migrations
+python -m app.migrations.migrate \$OLD_VERSION
+
+# 2.4 Restart service
+sudo systemctl restart api
+
+# 2.5 Update version
+echo "New version deployed: \$(cat $VERSION_FILE)"
+EOF
+
+if [ \$? -eq 0 ]; then
+    echo "status=success"
+    exit 0
+else
+    echo "status=fail"
+    echo "error=Deployment failed at step \$?"
+    exit 1
+fi 

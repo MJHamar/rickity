@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.database import get_db, Base, engine
-from models import Habit, HabitCreate, HabitLog, HabitWithLog
+from models import Habit, HabitCreate, HabitLog, HabitWithLog, HabitDurationCreate
 from repositories.habit_repository import HabitRepository
 from repositories.habit_log_repository import HabitLogRepository
 from utils.logging import setup_logger
@@ -91,16 +91,16 @@ def get_due_habits_today(db: Session = Depends(get_db)):
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     return repo.get_due_habits(today)
 
-@app.put("/habits/check/{log_id}")
-def complete_habit(log_id: UUID, db: Session = Depends(get_db)):
+@app.post("/habits/logs/{log_id}/durations")
+def add_log_duration(log_id: UUID, amount: str, db: Session = Depends(get_db)):
     repo = HabitLogRepository(db)
-    if not repo.complete_habit_log(log_id):
+    if not repo.add_log_duration(log_id, amount):
         raise HTTPException(status_code=404, detail="Habit log not found")
     return {"status": "success"}
 
-@app.put("/habits/uncheck/{log_id}")
-def uncomplete_habit(log_id: UUID, db: Session = Depends(get_db)):
+@app.delete("/habits/logs/durations/{duration_id}")
+def remove_log_duration(duration_id: UUID, db: Session = Depends(get_db)):
     repo = HabitLogRepository(db)
-    if not repo.uncomplete_habit_log(log_id):
-        raise HTTPException(status_code=404, detail="Habit log not found")
+    if not repo.remove_log_duration(duration_id):
+        raise HTTPException(status_code=404, detail="Duration record not found")
     return {"status": "success"} 

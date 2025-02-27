@@ -5,16 +5,36 @@ const formatDate = (date) => {
     return date.toISOString().split('T')[0];
 };
 
-const toggleHabitLog = async (logId, completed) => {
-    const endpoint = completed ? 'uncheck' : 'check';
+const addLogDuration = async (logId, durationType, goalAmount) => {
+    let amount = '1'; // Default for count type
+    
+    if (durationType === 'minutes') {
+        const minutes = prompt(`Enter minutes (goal: ${goalAmount}):`);
+        if (!minutes || isNaN(minutes)) return false;
+        amount = minutes;
+    }
+
     try {
-        const response = await fetch(`${API_URL}/habits/${endpoint}/${logId}`, {
-            method: 'PUT'
-        });
-        if (!response.ok) throw new Error('Failed to toggle habit');
-        return true;
+        const response = await fetch(
+            `${API_URL}/habits/logs/${logId}/durations?amount=${amount}`,
+            { method: 'POST' }
+        );
+        return response.ok;
     } catch (error) {
-        console.error('Error toggling habit:', error);
+        console.error('Error adding duration:', error);
+        return false;
+    }
+};
+
+const removeLogDuration = async (durationId) => {
+    try {
+        const response = await fetch(
+            `${API_URL}/habits/logs/durations/${durationId}`,
+            { method: 'DELETE' }
+        );
+        return response.ok;
+    } catch (error) {
+        console.error('Error removing duration:', error);
         return false;
     }
 }; 

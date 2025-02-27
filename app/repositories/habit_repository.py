@@ -4,7 +4,7 @@ from uuid import UUID
 from typing import List, Optional
 from utils.logging import setup_logger
 from utils.date_utils import parse_recurrence
-from database.models import Habit, HabitLog
+from database.models import Habit, HabitLog, HabitDuration
 from models import HabitCreate
 from repositories.habit_log_repository import HabitLogRepository
 
@@ -43,6 +43,13 @@ class HabitRepository:
         self.db.add(db_habit)
         self.db.commit()
         self.db.refresh(db_habit)
+        
+        # Create default duration if none provided
+        if not hasattr(habit, 'duration'):
+            self.create_duration(db_habit.id, {"type": "count", "amount": "1"})
+        else:
+            self.create_duration(db_habit.id, habit.duration)
+        
         logger.info(f"Created habit with ID: {db_habit.id}")
         return db_habit
 
@@ -85,4 +92,15 @@ class HabitRepository:
             new_logs = log_repo.create_due_logs(habit, now)
             all_new_logs.extend(new_logs)
             
-        return all_new_logs 
+        return all_new_logs
+
+    def create_duration(self, habit_id: str, duration: dict):
+        db_duration = HabitDuration(
+            habit_id=habit_id,
+            type=duration['type'],
+            amount=str(duration['amount'])
+        )
+        self.db.add(db_duration)
+        self.db.commit()
+        self.db.refresh(db_duration)
+        return db_duration 

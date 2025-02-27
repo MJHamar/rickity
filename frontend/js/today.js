@@ -14,26 +14,35 @@ $(document).ready(async function() {
         habitsList.empty();
 
         habits.forEach(habit => {
-            const completed = habit.latest_log?.completed || false;
+            const durations = habit.latest_log?.durations || [];
+            const sum = durations.reduce((acc, d) => acc + parseInt(d.amount), 0);
+            const duration = habit.habit.duration;
+            const goal = parseInt(duration.amount) || 1;
+            const completed = sum >= goal;
+
+            const habitItemHtml = `
+                <div class="habit-main">
+                    <span class="status-icon">${completed ? '✓' : '×'}</span>
+                    <span class="habit-name">${habit.habit.name} (${sum}/${goal})</span>
+                </div>
+                <div class="durations-list">
+                    ${durations.map(d => `
+                        <div class="duration-entry" data-duration-id="${d.id}">
+                            ${d.amount}
+                            <button class="remove-duration">×</button>
+                        </div>
+                    `).join('')}
+                    <button class="add-duration">+ Add</button>
+                </div>
+            `;
+            
             const habitItem = $('<div>', {
                 class: `habit-item ${completed ? 'completed' : 'uncompleted'}`,
                 'data-log-id': habit.latest_log?.id,
-                'data-completed': completed
-            });
+                'data-duration-type': duration.type,
+                'data-goal-amount': goal
+            }).html(habitItemHtml);
             
-            // Create a text container for better styling
-            const textSpan = $('<span>', {
-                text: habit.habit.name,
-                class: 'habit-name'
-            });
-            
-            // Add a status indicator
-            const statusIcon = $('<span>', {
-                class: 'status-icon',
-                html: completed ? '✓' : '×'
-            });
-            
-            habitItem.append(statusIcon, textSpan);
             habitsList.append(habitItem);
         });
     }
@@ -42,15 +51,32 @@ $(document).ready(async function() {
     $('#habits-list').on('click', '.habit-item', async function() {
         const item = $(this);
         const logId = item.data('log-id');
-        const completed = item.data('completed');
+        const durationType = item.data('duration-type');
+        const goalAmount = item.data('goal-amount');
 
-        if (logId && await toggleHabitLog(logId, completed)) {
-            item.toggleClass('completed uncompleted');
-            item.data('completed', !completed);
-            
-            // Update the status icon
-            const statusIcon = item.find('.status-icon');
-            statusIcon.html(!completed ? '✓' : '×');
+        if (logId && await addLogDuration(logId, durationType, goalAmount)) {
+            location.reload(); // Refresh to show updated values
+        }
+    });
+
+    // Add click handlers
+    $('#habits-list').on('click', '.add-duration', async function(e) {
+        e.stopPropagation();
+        const item = $(this).closest('.habit-item');
+        const logId = item.data('log-id');
+        const durationType = item.data('duration-type');
+        const goalAmount = item.data('goal-amount');
+        
+        if (await addLogDuration(logId, durationType, goalAmount)) {
+            location.reload();
+        }
+    });
+
+    $('#habits-list').on('click', '.remove-duration', async function(e) {
+        e.stopPropagation();
+        const durationId = $(this).closest('.duration-entry').data('duration-id');
+        if (await removeLogDuration(durationId)) {
+            location.reload();
         }
     });
 

@@ -1,0 +1,15 @@
+[Unit]
+Description=API Service
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/api  # Match your DEPLOY_PATH from config.ini
+ExecStart=/opt/venvs/api/bin/python -m app.main  # Path to your virtualenv
+EnvironmentFile=/var/www/api/.env  # Should match DEPLOY_PATH/.env
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
