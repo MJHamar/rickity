@@ -51,9 +51,9 @@ $(document).ready(function() {
         if (timerState.timer_status === 'rolling') {
             $('#toggle-button').text('Pause');
         } else if (timerState.timer_status === 'paused') {
-            $('#toggle-button').text('Continue');
+            $('#toggle-button').text('Resume');
         } else {
-            $('#toggle-button').text('Reset');
+            $('#toggle-button').text('Start');
         }
     }
 
@@ -119,6 +119,8 @@ $(document).ready(function() {
     $('#toggle-button').click(function() {
         if (timerState.timer_status === 'rolling') {
             sendCommand('pause');
+        } else if (timerState.timer_status === 'paused') {
+            sendCommand('resume');
         } else {
             sendCommand('start');
         }

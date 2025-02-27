@@ -112,6 +112,8 @@ async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = 
                     await timer_manager.pause_timer(timer_id)
                 elif action == "stop":
                     await timer_manager.stop_timer(timer_id)
+                elif action == "resume":
+                    await timer_manager.resume_timer(timer_id)
                 else:
                     logger.warning(f"Unknown action: {action}")
             except json.JSONDecodeError:

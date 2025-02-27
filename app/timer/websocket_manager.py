@@ -1,7 +1,7 @@
 # app/timer/websocket_manager.py
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Set, Optional
 from uuid import UUID
 from fastapi import WebSocket, WebSocketDisconnect
@@ -130,6 +130,27 @@ class TimerManager:
         timer = self.active_timers[timer_id]
         timer.status = "stopped"
         timer.remaining = timer.duration  # Reset to full duration
+        await self._notify_subscribers(timer_id)
+    
+    async def resume_timer(self, timer_id: str):
+        """Resume a paused timer"""
+        if timer_id not in self.active_timers:
+            raise ValueError(f"Timer {timer_id} not found")
+        
+        timer = self.active_timers[timer_id]
+        if timer.status != "paused":
+            raise ValueError("Cannot resume a timer that is not paused")
+        
+        # Set the status to rolling
+        timer.status = "rolling"
+        
+        # Calculate a new start_time that accounts for the time already spent
+        # This ensures the timer continues from where it was paused
+        current_time = datetime.utcnow()
+        time_already_spent = timer.duration - timer.remaining
+        timer.start_time = current_time - timedelta(seconds=time_already_spent)
+        
+        # Notify subscribers about the state change
         await self._notify_subscribers(timer_id)
     
     async def _notify_subscribers(self, timer_id: str):
