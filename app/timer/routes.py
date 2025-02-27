@@ -41,6 +41,42 @@ async def get_active_timers():
     """Get all currently active timers"""
     return timer_manager.get_active_timers()
 
+@router.delete("/{timer_id}", response_model=Dict)
+async def delete_timer(timer_id: UUID, db: Session = Depends(get_db)):
+    """Delete a timer by ID"""
+    logger.info(f"Request to delete timer: {timer_id}")
+    repo = TimerRepository(db)
+    success = repo.delete_timer(timer_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Timer with ID {timer_id} not found"
+        )
+    
+    return {"message": f"Timer with ID {timer_id} deleted successfully"}
+
+@router.put("/{timer_id}", response_model=Timer)
+async def update_timer(timer_id: UUID, timer: TimerCreate, db: Session = Depends(get_db)):
+    """Update an existing timer"""
+    logger.info(f"Updating timer: {timer_id}")
+    repo = TimerRepository(db)
+    
+    try:
+        updated_timer = repo.update_timer(timer_id, timer)
+        if updated_timer is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Timer with ID {timer_id} not found"
+            )
+        return updated_timer
+    except ValueError as e:
+        logger.warning(f"Invalid timer data: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
 @router.websocket("/ws/{timer_id}")
 async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = Depends(get_db)):
     """WebSocket endpoint for timer updates"""
