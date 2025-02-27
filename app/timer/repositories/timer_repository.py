@@ -4,7 +4,6 @@ from uuid import UUID
 from typing import List, Optional
 
 from utils.logging import setup_logger
-from timer.database.models import Timer, TimerInstance
 from timer.models import TimerDB, TimerCreate
 
 logger = setup_logger(__name__)
