@@ -18,9 +18,8 @@ $(document).ready(function() {
     
     // Update timer display
     function updateTimerDisplay() {
-        console.log('timerState', timerState);
         // Update time display
-        $('#timer-time').text(formatTime(timerState.timer_state));
+        $('#timer-time').text(formatTime(timerState['timer_state']));
         
         // Update status text and class
         const statusElement = $('#timer-status');
@@ -29,7 +28,7 @@ $(document).ready(function() {
         let statusText = '';
         let statusClass = '';
         
-        switch(timerState.status) {
+        switch(timerState['timer_status']) {
             case 'rolling':
                 statusText = 'Running';
                 statusClass = 'status-rolling';
@@ -43,13 +42,13 @@ $(document).ready(function() {
                 statusClass = 'status-stopped';
                 break;
             default:
-                statusText = timerState.timer_status;
+                statusText = timerState['timer_status'];
         }
         
         statusElement.text(statusText).addClass(statusClass);
         
         // Update button text based on timer status
-        if (timerState.status === 'rolling') {
+        if (timerState['timer_status'] === 'rolling') {
             $('#toggle-button').text('Pause');
         } else {
             $('#toggle-button').text('Continue');
@@ -83,7 +82,7 @@ $(document).ready(function() {
         // Handle incoming messages
         socket.onmessage = function(event) {
             console.log('Message received:', event.data);
-            const parsedMessage = event.data;
+            const parsedMessage = parseTimerMessage(event.data);
             timerState = parsedMessage;
             updateTimerDisplay();
         };
@@ -119,7 +118,7 @@ $(document).ready(function() {
     
     // Handle toggle button click (pause/continue)
     $('#toggle-button').click(function() {
-        if (timerState.status === 'rolling') {
+        if (timerState['timer_status'] === 'rolling') {
             sendCommand('pause');
         } else {
             sendCommand('start');
