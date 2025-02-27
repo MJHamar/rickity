@@ -11,6 +11,8 @@ from habits.repositories.habit_repository import HabitRepository
 from habits.repositories.habit_log_repository import HabitLogRepository
 from utils.logging import setup_logger
 
+from timer.routes import router as timer_router
+
 logger = setup_logger(__name__)
 
 app = FastAPI()
@@ -103,4 +105,73 @@ def uncomplete_habit(log_id: UUID, db: Session = Depends(get_db)):
     repo = HabitLogRepository(db)
     if not repo.uncomplete_habit_log(log_id):
         raise HTTPException(status_code=404, detail="Habit log not found")
-    return {"status": "success"} 
+    return {"status": "success"}
+
+# Timer endpoints
+from timer.database.database import get_db as get_timer_db, Base as TimerBase, engine as timer_engine
+from timer.models import Timer, TimerCreate, TimerInstance
+from timer.repositories.timer_repository import TimerRepository
+from timer.repositories.timer_instance_repository import TimerInstanceRepository
+
+# Create timer tables
+TimerBase.metadata.create_all(bind=timer_engine)
+logger.info("Timer database tables created")
+
+@app.get("/timer", response_model=List[Timer])
+def get_timers(db: Session = Depends(get_timer_db)):
+    logger.info("Fetching all timers")
+    repo = TimerRepository(db)
+    return repo.get_timers()
+
+@app.post("/timer", response_model=Timer)
+def create_timer(timer: TimerCreate, db: Session = Depends(get_timer_db)):
+    logger.info(f"Creating new timer: {timer.name}")
+    repo = TimerRepository(db)
+    try:
+        new_timer = repo.create_timer(timer)
+        return new_timer
+    except ValueError as e:
+        logger.warning(f"Invalid timer data: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+@app.get("/timer/{timer_id}", response_model=List[TimerInstance])
+def get_timer_instances(timer_id: UUID, db: Session = Depends(get_timer_db)):
+    logger.info(f"Fetching instances for timer: {timer_id}")
+    repo = TimerInstanceRepository(db)
+    return repo.get_timer_instances(timer_id)
+
+@app.put("/timer/start/{timer_id}", response_model=TimerInstance)
+def start_timer(timer_id: UUID, db: Session = Depends(get_timer_db)):
+    logger.info(f"Starting timer: {timer_id}")
+    repo = TimerInstanceRepository(db)
+    try:
+        timer_instance = repo.create_timer_instance(timer_id)
+        return timer_instance
+    except ValueError as e:
+        logger.warning(f"Error starting timer: {str(e)}")
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+
+@app.put("/timer/pause/{timer_instance_id}", response_model=TimerInstance)
+def pause_timer(timer_instance_id: UUID, db: Session = Depends(get_timer_db)):
+    logger.info(f"Pausing timer instance: {timer_instance_id}")
+    repo = TimerInstanceRepository(db)
+    try:
+        timer_instance = repo.pause_timer_instance(timer_instance_id)
+        if timer_instance is None:
+            raise HTTPException(status_code=404, detail="Timer instance not found")
+        return timer_instance
+    except ValueError as e:
+        logger.warning(f"Error pausing timer: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+# Add the timer router to the main app
+app.include_router(timer_router, prefix="/timer", tags=["timer"]) 

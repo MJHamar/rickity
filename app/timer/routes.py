@@ -1,0 +1,96 @@
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from sqlalchemy.orm import Session
+from typing import List, Dict
+from uuid import UUID
+import json
+
+from timer.database.database import get_db
+from timer.models import Timer, TimerCreate
+from timer.repositories.timer_repository import TimerRepository
+from timer.websocket_manager import timer_manager
+
+from utils.logging import setup_logger
+logger = setup_logger(__name__)
+
+router = APIRouter()
+
+@router.get("/", response_model=List[Timer])
+async def get_timers(db: Session = Depends(get_db)):
+    """Get all timer definitions"""
+    logger.info("Fetching all timers")
+    repo = TimerRepository(db)
+    return repo.get_timers()
+
+@router.post("/", response_model=Timer)
+async def create_timer(timer: TimerCreate, db: Session = Depends(get_db)):
+    """Create a new timer definition"""
+    logger.info(f"Creating new timer: {timer.name}")
+    repo = TimerRepository(db)
+    try:
+        new_timer = repo.create_timer(timer)
+        return new_timer
+    except ValueError as e:
+        logger.warning(f"Invalid timer data: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+@router.get("/active", response_model=Dict)
+async def get_active_timers():
+    """Get all currently active timers"""
+    return timer_manager.get_active_timers()
+
+@router.websocket("/ws/{timer_id}")
+async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = Depends(get_db)):
+    """WebSocket endpoint for timer updates"""
+    await websocket.accept()
+    
+    try:
+        # Get timer from database
+        repo = TimerRepository(db)
+        timer = repo.get_timer(UUID(timer_id))
+        if timer is None:
+            await websocket.close(code=1000, reason="Timer not found")
+            return
+        
+        # Register timer with manager
+        await timer_manager.register_timer(timer_id, timer.name, timer.duration)
+        
+        # Subscribe to timer updates
+        await timer_manager.subscribe(websocket, timer_id)
+        
+        # Ensure the update loop is running
+        await timer_manager.start_update_loop()
+        
+        # Listen for commands from the client
+        while True:
+            data = await websocket.receive_text()
+            try:
+                command = json.loads(data)
+                action = command.get("action")
+                
+                if action == "start":
+                    await timer_manager.start_timer(timer_id)
+                elif action == "pause":
+                    await timer_manager.pause_timer(timer_id)
+                elif action == "stop":
+                    await timer_manager.stop_timer(timer_id)
+                else:
+                    logger.warning(f"Unknown action: {action}")
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON received: {data}")
+            except Exception as e:
+                logger.error(f"Error processing command: {e}")
+    
+    except WebSocketDisconnect:
+        # Client disconnected
+        logger.info(f"Client disconnected from timer {timer_id}")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+    finally:
+        # Ensure cleanup
+        try:
+            await timer_manager.unsubscribe(websocket, timer_id)
+        except:
+            pass
