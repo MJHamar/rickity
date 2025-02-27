@@ -18,9 +18,6 @@ $(document).ready(function() {
     
     // Update timer display
     function updateTimerDisplay() {
-        console.log('timerState', timerState);
-        console.log('timerState.timer_state', timerState.timer_state);
-        console.log('timerState.timer_status', timerState.timer_status);
         // Update time display
         $('#timer-time').text(formatTime(timerState.timer_state));
         
@@ -53,8 +50,10 @@ $(document).ready(function() {
         // Update button text based on timer status
         if (timerState.timer_status === 'rolling') {
             $('#toggle-button').text('Pause');
-        } else {
+        } else if (timerState.timer_status === 'paused') {
             $('#toggle-button').text('Continue');
+        } else {
+            $('#toggle-button').text('Reset');
         }
     }
 
