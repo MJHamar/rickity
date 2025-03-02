@@ -52,3 +52,16 @@ function hhmmssToSeconds(hhmmss) {
     
     return hours * 3600 + minutes * 60 + seconds;
 }
+
+/**
+ * Production-ready cache busting for JavaScript files
+ * Uses a fixed version number that should be updated with each deployment
+ * @param {string} jsFilePath - Path to the JavaScript file
+ * @returns {string} Path with cache busting query parameter
+ */
+function getVersionedJsPath(jsFilePath) {
+    // In production, use a fixed version number that changes only when files are updated
+    // This version should be updated during deployment or release process
+    const APP_VERSION = '1.0.0';
+    return `${jsFilePath}?v=${APP_VERSION}`;
+}

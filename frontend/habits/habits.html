@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../js/common.js"></script>
-    <script src="js/habits.js"></script>
+    <script>
+        // Load script after common.js is available to use the cache busting function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create and append the habits.js script with version parameter
+            const script = document.createElement('script');
+            script.src = getVersionedJsPath('js/habits.js');
+            document.head.appendChild(script);
+        });
+    </script>
 </head>
 <body>
     <nav>
