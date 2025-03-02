@@ -5,12 +5,13 @@ from datetime import datetime, timedelta
 from typing import Dict, Set, Optional
 from uuid import UUID
 from fastapi import WebSocket, WebSocketDisconnect
+import os
 
 from utils.logging import setup_logger
 logger = setup_logger(__name__)
 
 class TimerState:
-    def __init__(self, timer_id: str, name: str, duration: int):
+    def __init__(self, timer_id: str, name: str, duration: int, sound_id: Optional[str] = None):
         self.timer_id = timer_id
         self.name = name
         self.duration = duration  # Total duration in seconds
@@ -19,6 +20,7 @@ class TimerState:
         self.subscribers: Set[WebSocket] = set()
         self.start_time: Optional[datetime] = None
         self.pause_time: Optional[datetime] = None
+        self.sound_id = sound_id  # Sound ID for when timer finishes
     
     def seconds_to_hhmmss(self, seconds: int) -> str:
         """Convert seconds to HHmmss format"""
@@ -44,7 +46,8 @@ class TimerState:
             "duration": self.seconds_to_hhmmss(self.duration),
             "timer_state": self.seconds_to_hhmmss(self.remaining),
             "timer_status": self.status,
-            "subscribers": len(self.subscribers)
+            "subscribers": len(self.subscribers),
+            "sound_id": self.sound_id
         }
 
 class TimerManager:
@@ -70,11 +73,16 @@ class TimerManager:
                         
                         # Timer has finished
                         if timer.remaining <= 0:
+                            # Status was rolling and now it's finished, so play sound
                             timer.status = "finished"
                             timer.remaining = 0
-                        
-                        # Notify all subscribers
-                        await self._notify_subscribers(timer_id)
+                            
+                            # Include sound_id in the notification to signal to the client
+                            # that a sound should be played
+                            await self._notify_subscribers(timer_id, play_sound=timer.sound_id is not None)
+                        else:
+                            # Regular update, no sound
+                            await self._notify_subscribers(timer_id)
                         
                         # Remove timer if no subscribers (for both stopped and finished statuses)
                         if (timer.status == "stopped" or timer.status == "finished") and not timer.subscribers:
@@ -85,10 +93,10 @@ class TimerManager:
                 logger.error(f"Error in timer update loop: {e}")
                 await asyncio.sleep(1)  # Continue even if there's an error
     
-    async def register_timer(self, timer_id: str, name: str, duration: int) -> TimerState:
+    async def register_timer(self, timer_id: str, name: str, duration: int, sound_id: Optional[str] = None) -> TimerState:
         """Register a new timer or get existing one"""
         if timer_id not in self.active_timers:
-            self.active_timers[timer_id] = TimerState(timer_id, name, duration)
+            self.active_timers[timer_id] = TimerState(timer_id, name, duration, sound_id)
         return self.active_timers[timer_id]
     
     async def subscribe(self, websocket: WebSocket, timer_id: str):
@@ -170,35 +178,43 @@ class TimerManager:
         # Notify subscribers about the state change
         await self._notify_subscribers(timer_id)
     
-    async def _notify_subscribers(self, timer_id: str):
-        """Send updates to all subscribers of a timer"""
+    async def _notify_subscribers(self, timer_id: str, play_sound: bool = False):
+        """Notify all subscribers to a timer about its current state"""
         if timer_id not in self.active_timers:
             return
-            
+        
         timer = self.active_timers[timer_id]
-        closed_websockets = set()
+        dead_sockets = set()
+        
+        # Prepare the notification data
+        timer_data = timer.to_dict()
+        if play_sound and timer.status == "finished":
+            timer_data["play_sound"] = True
         
         for websocket in timer.subscribers:
             try:
-                await self._notify_subscriber(timer_id, websocket)
-            except Exception:
-                closed_websockets.add(websocket)
+                await self._notify_subscriber(timer_id, websocket, timer_data)
+            except Exception as e:
+                logger.error(f"Error notifying subscriber: {e}")
+                dead_sockets.add(websocket)
         
-        # Remove closed websockets
-        for ws in closed_websockets:
-            timer.subscribers.remove(ws)
+        # Clean up dead sockets
+        for dead_socket in dead_sockets:
+            timer.subscribers.discard(dead_socket)
     
-    async def _notify_subscriber(self, timer_id: str, websocket: WebSocket):
-        """Send timer update to a single subscriber"""
+    async def _notify_subscriber(self, timer_id: str, websocket: WebSocket, timer_data: Optional[dict] = None):
+        """Send a notification to a specific subscriber"""
         if timer_id not in self.active_timers:
             return
-            
+        
         timer = self.active_timers[timer_id]
-        message = {
-            "timer_state": timer.seconds_to_hhmmss(int(timer.remaining)),
-            "timer_status": timer.status
-        }
-        await websocket.send_text(json.dumps(message))
+        try:
+            if timer_data is None:
+                timer_data = timer.to_dict()
+            await websocket.send_json(timer_data)
+        except Exception as e:
+            logger.error(f"Failed to send update to subscriber: {e}")
+            raise
     
     def get_active_timers(self):
         """Get all active timers"""

@@ -1,0 +1,3 @@
+[submodule "dingutil"]
+	path = dingutil
+	url = git@github.com:MJHamar/dingutil.git

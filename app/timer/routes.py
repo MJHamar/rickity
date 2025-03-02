@@ -1,12 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Response
 from sqlalchemy.orm import Session
 from typing import List, Dict
 from uuid import UUID
 import json
+import os
+from starlette.responses import FileResponse
+from fastapi.responses import JSONResponse
 
 from timer.database.database import get_db
-from timer.models import Timer, TimerCreate
+from timer.models import Timer, TimerCreate, Sound
 from timer.repositories.timer_repository import TimerRepository
+from timer.repositories.sound_repository import SoundRepository
 from timer.websocket_manager import timer_manager
 
 from utils.logging import setup_logger
@@ -14,6 +18,58 @@ logger = setup_logger(__name__)
 
 router = APIRouter()
 
+# Sound routes
+@router.get("/sounds", response_model=List[Sound])
+async def get_sounds(db: Session = Depends(get_db)):
+    """Get all sounds"""
+    logger.info("Fetching all sounds")
+    repo = SoundRepository(db)
+    return repo.get_sounds()
+
+@router.get("/sounds/{sound_id}")
+async def get_sound_file(sound_id: UUID, db: Session = Depends(get_db)):
+    """Get a sound file by ID"""
+    logger.info(f"Fetching sound file for ID: {sound_id}")
+    repo = SoundRepository(db)
+    sound = repo.get_sound(sound_id)
+    
+    if sound is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Sound with ID {sound_id} not found"
+        )
+    
+    # Check if the file exists
+    if not os.path.exists(sound.file):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Sound file {sound.file} not found"
+        )
+    
+    return FileResponse(
+        sound.file,
+        media_type="application/octet-stream",
+        filename=os.path.basename(sound.file)
+    )
+
+@router.patch("/sounds", response_model=List[Sound])
+async def sync_sounds(db: Session = Depends(get_db)):
+    """Scan the sounds directory and update the database"""
+    logger.info("Syncing sounds directory")
+    repo = SoundRepository(db)
+    sounds_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "dingutil", "sounds")
+    
+    logger.info(f"Using sounds directory: {sounds_dir}")
+    if not os.path.exists(sounds_dir):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": f"Sounds directory not found: {sounds_dir}"}
+        )
+    
+    sounds = repo.sync_sounds_directory(sounds_dir)
+    return sounds
+
+# Timer routes
 @router.get("/", response_model=List[Timer])
 async def get_timers(db: Session = Depends(get_db)):
     """Get all timer definitions"""
@@ -91,7 +147,7 @@ async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = 
             return
         
         # Register timer with manager
-        await timer_manager.register_timer(timer_id, timer.name, timer.duration)
+        await timer_manager.register_timer(timer_id, timer.name, timer.duration, timer.sound_id)
         
         # Subscribe to timer updates
         await timer_manager.subscribe(websocket, timer_id)
@@ -131,7 +187,8 @@ async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = 
                                         # Create a TimerCreate object with the current name and new duration
                                         timer_update = TimerCreate(
                                             name=updated_timer.name,
-                                            duration=timer_state.duration
+                                            duration=timer_state.duration,
+                                            sound_id=updated_timer.sound_id
                                         )
                                         repo.update_timer(UUID(timer_id), timer_update)
                         except ValueError as e:

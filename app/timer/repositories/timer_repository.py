@@ -32,7 +32,8 @@ class TimerRepository:
         
         db_timer = TimerDB(
             name=timer.name,
-            duration=timer.duration
+            duration=timer.duration,
+            sound_id=str(timer.sound_id) if timer.sound_id else None
         )
         self.db.add(db_timer)
         self.db.commit()
@@ -54,6 +55,7 @@ class TimerRepository:
         
         db_timer.name = timer.name
         db_timer.duration = timer.duration
+        db_timer.sound_id = str(timer.sound_id) if timer.sound_id else None
         
         self.db.commit()
         self.db.refresh(db_timer)

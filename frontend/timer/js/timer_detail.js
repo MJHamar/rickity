@@ -8,10 +8,13 @@ $(document).ready(function() {
     let socket = null;
     let timerState = {
         timer_state: "000000",
-        timer_status: 'stopped'
+        timer_status: 'stopped',
+        sound_id: null
     };
     let previousStatus = 'stopped';
     let timerUpdateTimeout = null;
+    let availableSounds = [];
+    let currentAudio = null;
     
     // Update UI with timer information
     function updateTimerInfo() {
@@ -91,6 +94,15 @@ $(document).ready(function() {
         });
     }
     
+    // Show or hide sound selector based on timer status
+    function updateSoundSelectorVisibility() {
+        if (timerState.timer_status === 'stopped' || timerState.timer_status === 'finished') {
+            $('#sound-selector').show();
+        } else {
+            $('#sound-selector').hide();
+        }
+    }
+    
     // Update timer display
     function updateTimerDisplay() {
         // Parse timer state (HHmmss format)
@@ -156,6 +168,14 @@ $(document).ready(function() {
         } else {
             $('#toggle-button').text('Start');
         }
+        
+        // Update sound selector visibility
+        updateSoundSelectorVisibility();
+        
+        // Update selected sound
+        if (timerState.sound_id) {
+            $('#timer-sound').val(timerState.sound_id);
+        }
     }
 
     // Parse WebSocket message
@@ -185,6 +205,11 @@ $(document).ready(function() {
             const parsedMessage = parseTimerMessage(event.data);
             timerState = parsedMessage;
             updateTimerDisplay();
+            
+            // Check if we need to play a sound
+            if (parsedMessage.play_sound && parsedMessage.sound_id) {
+                playSound(parsedMessage.sound_id);
+            }
         };
         
         // Handle socket error
@@ -238,6 +263,90 @@ $(document).ready(function() {
         }, 300);
     }
     
+    // Play a sound
+    async function playSound(soundId) {
+        if (!soundId) return;
+        
+        // Stop any currently playing sound
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+        
+        try {
+            // Create a new audio element
+            currentAudio = new Audio(`${API_URL}/timer/sounds/${soundId}`);
+            await currentAudio.play();
+        } catch (error) {
+            console.error('Error playing sound:', error);
+            console.log('Error details:', error.message);
+        }
+    }
+    
+    // Fetch all sounds from the API
+    async function fetchSounds() {
+        try {
+            const response = await fetch(`${API_URL}/timer/sounds`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch sounds');
+            }
+            availableSounds = await response.json();
+            populateSoundDropdown();
+        } catch (error) {
+            console.error('Error fetching sounds:', error);
+            // Continue without sounds
+            availableSounds = [];
+        }
+    }
+    
+    // Populate sound dropdown with available sounds
+    function populateSoundDropdown() {
+        const soundDropdown = $('#timer-sound');
+        
+        // Clear existing options except the first one (No Sound)
+        soundDropdown.find('option:not(:first)').remove();
+        
+        // Add sound options
+        availableSounds.forEach(sound => {
+            soundDropdown.append(`<option value="${sound.id}">${sound.name}</option>`);
+        });
+        
+        // Set the current sound if available
+        if (timerState.sound_id) {
+            soundDropdown.val(timerState.sound_id);
+        }
+    }
+    
+    // Update timer sound
+    async function updateTimerSound(soundId) {
+        try {
+            const response = await fetch(`${API_URL}/timer/${timerId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: timerName,
+                    duration: hhmmssToSeconds(timerState.timer_state),
+                    sound_id: soundId || null
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update timer sound');
+            }
+            
+            // Update local state
+            timerState.sound_id = soundId;
+            
+            // Show success message
+            alert('Sound saved successfully!');
+        } catch (error) {
+            console.error('Error updating timer sound:', error);
+            alert('Failed to update timer sound. Please try again.');
+        }
+    }
+    
     // Handle toggle button click (pause/continue)
     $('#toggle-button').click(function() {
         if (timerState.timer_status === 'rolling') {
@@ -254,55 +363,70 @@ $(document).ready(function() {
         sendCommand('stop');
     });
     
-    // Handle timer value changes
-    $(document).on('focus', '.time-segment', function() {
-        // Select all text when focused
+    // Handle timer segment editing
+    $('.time-segment').on('focus', function() {
+        // Select all text when focusing
         const range = document.createRange();
         range.selectNodeContents(this);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
-    });
-    
-    $(document).on('input', '.time-segment', function() {
+    }).on('input', function() {
         const type = $(this).data('type');
         let value = $(this).text().replace(/\D/g, ''); // Remove non-digits
         
-        // Apply limits based on segment type
+        // Enforce limits based on segment type
         if (type === 'hours') {
-            // No specific limit for hours, but keep it 2 digits
-            if (value.length > 2) value = value.substring(0, 2);
+            // No specific limit for hours
         } else if (type === 'minutes' || type === 'seconds') {
-            // Limit to 0-59
-            if (value.length > 2) value = value.substring(0, 2);
             if (parseInt(value) > 59) value = '59';
         }
         
-        // Update the segment text
+        // Update display and pad to 2 digits
         $(this).text(value.padStart(2, '0'));
         
-        // Trigger update after change
+        // Send timer update to server
         sendTimerUpdate();
-    });
-    
-    // Handle paste to strip formatting and non-numeric characters
-    $(document).on('paste', '.time-segment', function(e) {
-        e.preventDefault();
-        const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
-        const pastedText = clipboardData.getData('text');
-        const numericText = pastedText.replace(/\D/g, '');
-        document.execCommand('insertText', false, numericText);
-    });
-    
-    // Set a flag when leaving the page to prevent reconnect attempts
-    $(window).on('beforeunload', function() {
-        window.isLeavingPage = true;
-        if (socket) {
-            socket.close();
+    }).on('blur', function() {
+        // Ensure display format is correct on blur
+        const value = $(this).text().trim() || '0';
+        $(this).text(value.padStart(2, '0'));
+    }).on('keydown', function(e) {
+        // Handle keydown events (Enter and Escape)
+        if (e.key === 'Enter' || e.key === 'Escape') {
+            e.preventDefault();
+            $(this).blur();
         }
     });
     
-    // Initialize the page
-    updateTimerInfo();
-    initializeWebSocket();
+    // Handle sound preview button
+    $('#preview-sound-btn').click(function() {
+        const soundId = $('#timer-sound').val();
+        playSound(soundId);
+    });
+    
+    // Handle save sound button
+    $('#save-sound-btn').click(function() {
+        const soundId = $('#timer-sound').val();
+        updateTimerSound(soundId);
+    });
+    
+    // Initialize timer
+    function init() {
+        updateTimerInfo();
+        fetchSounds();
+        initializeWebSocket();
+        
+        // Register event for page unload to cleanly close WebSocket
+        window.isLeavingPage = false;
+        window.addEventListener('beforeunload', function() {
+            window.isLeavingPage = true;
+            if (socket) {
+                socket.close();
+            }
+        });
+    }
+    
+    // Start initialization
+    init();
 }); 

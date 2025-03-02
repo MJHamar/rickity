@@ -7,6 +7,71 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../js/common.js"></script>
+    <style>
+        .sound-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .play-sound-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .play-sound-btn:hover {
+            background-color: #0b7dda;
+        }
+        .edit-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .edit-button:hover {
+            background-color: #45a049;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+    </style>
     <script>
         // Load script after common.js is available to use the cache busting function
         document.addEventListener('DOMContentLoaded', function() {
@@ -39,6 +104,16 @@
                     <label for="timer-duration">Duration (seconds or HH:MM:SS):</label>
                     <input type="text" id="timer-duration" placeholder="Enter duration (e.g. 60 or 00:01:00)" required>
                 </div>
+                <div class="form-group">
+                    <label for="timer-sound">Sound When Finished:</label>
+                    <div class="sound-controls">
+                        <select id="timer-sound">
+                            <option value="">No Sound</option>
+                            <!-- Sound options will be populated dynamically -->
+                        </select>
+                        <button type="button" id="preview-sound-btn" class="play-sound-btn">▶</button>
+                    </div>
+                </div>
                 <button type="submit">Create Timer</button>
             </form>
         </div>
@@ -48,6 +123,36 @@
         <div id="timer-list" class="timer-list">
             <!-- Timer cards will be dynamically inserted here -->
             <p>Loading timers...</p>
+        </div>
+    </div>
+
+    <!-- Edit Timer Modal -->
+    <div id="edit-timer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Timer</h2>
+            <form id="edit-timer-form">
+                <input type="hidden" id="edit-timer-id">
+                <div class="form-group">
+                    <label for="edit-timer-name">Timer Name:</label>
+                    <input type="text" id="edit-timer-name" placeholder="Enter timer name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-timer-duration">Duration (seconds or HH:MM:SS):</label>
+                    <input type="text" id="edit-timer-duration" placeholder="Enter duration (e.g. 60 or 00:01:00)" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-timer-sound">Sound When Finished:</label>
+                    <div class="sound-controls">
+                        <select id="edit-timer-sound">
+                            <option value="">No Sound</option>
+                            <!-- Sound options will be populated dynamically -->
+                        </select>
+                        <button type="button" id="edit-preview-sound-btn" class="play-sound-btn">▶</button>
+                    </div>
+                </div>
+                <button type="submit">Save Changes</button>
+            </form>
         </div>
     </div>
 </body>
