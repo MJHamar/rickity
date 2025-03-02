@@ -263,6 +263,37 @@ $(document).ready(function() {
         }, 300);
     }
     
+    // Check if an audio format is supported by the browser
+    function isAudioFormatSupported(mimeType) {
+        const audio = document.createElement('audio');
+        return audio.canPlayType(mimeType) !== '';
+    }
+
+    // Check if AIFF format is supported
+    const isAiffSupported = isAudioFormatSupported('audio/aiff');
+    console.log('Browser supports AIFF format:', isAiffSupported);
+
+    // Get the best supported format
+    function getBestSupportedFormat() {
+        const formats = {
+            mp3: isAudioFormatSupported('audio/mpeg'),
+            wav: isAudioFormatSupported('audio/wav'),
+            ogg: isAudioFormatSupported('audio/ogg'),
+            aiff: isAudioFormatSupported('audio/aiff')
+        };
+        
+        console.log('Browser audio format support:', formats);
+        
+        // Return the first supported format in order of preference
+        if (formats.mp3) return 'mp3';
+        if (formats.wav) return 'wav';
+        if (formats.ogg) return 'ogg';
+        if (formats.aiff) return 'aiff';
+        
+        // Fallback to MP3 if nothing is explicitly supported
+        return 'mp3';
+    }
+
     // Play a sound
     async function playSound(soundId) {
         if (!soundId) return;
@@ -274,12 +305,120 @@ $(document).ready(function() {
         }
         
         try {
+            console.log(`Attempting to play sound with ID: ${soundId}`);
+            
+            // Determine if we need format conversion based on browser support
+            let requestUrl = `${API_URL}/timer/sounds/${soundId}`;
+            const browserSupport = {
+                aiff: isAudioFormatSupported('audio/aiff'),
+                mp3: isAudioFormatSupported('audio/mpeg'),
+                wav: isAudioFormatSupported('audio/wav')
+            };
+            
+            // If this might be an AIFF file and browser doesn't support AIFF, request conversion
+            if (!browserSupport.aiff && browserSupport.mp3) {
+                // First make a HEAD request to check if it's an AIFF file
+                try {
+                    const response = await fetch(requestUrl, { method: 'HEAD' });
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (contentType && contentType.includes('audio/aiff')) {
+                        console.log('AIFF file detected and browser does not support AIFF. Requesting MP3 conversion.');
+                        requestUrl += '?convert_format=mp3';
+                    }
+                } catch (error) {
+                    console.error('Error checking file type:', error);
+                }
+            }
+            
+            console.log(`Sound URL: ${requestUrl}`);
+            
             // Create a new audio element
-            currentAudio = new Audio(`${API_URL}/timer/sounds/${soundId}`);
+            currentAudio = new Audio();
+            
+            // Set up error handling before setting the source
+            currentAudio.addEventListener('error', (e) => {
+                console.error('Audio error event:', e);
+                if (currentAudio.error) {
+                    console.error('Audio error code:', currentAudio.error.code);
+                    console.error('Audio error message:', currentAudio.error.message);
+                }
+            });
+            
+            // Wait for the audio to be loaded before playing
+            currentAudio.addEventListener('canplaythrough', () => {
+                console.log('Audio can play through - ready to play');
+            });
+            
+            // AIFF Fallback: If we detect this is an AIFF file and the browser doesn't support it,
+            // we'll try to alert the user but continue playback attempt anyway
+            const fileExtMatch = requestUrl.match(/\.(wav|mp3|ogg|aiff)$/i);
+            const fileExt = fileExtMatch ? fileExtMatch[1].toLowerCase() : '';
+            
+            if (fileExt === 'aiff' && !isAiffSupported) {
+                console.warn('AIFF format not well supported in this browser. Playback may fail or using conversion.');
+            }
+            
+            // Set source and try to play the audio
+            currentAudio.src = requestUrl;
+            
+            // Try to play the audio
             await currentAudio.play();
+            console.log('Audio playback started successfully');
         } catch (error) {
             console.error('Error playing sound:', error);
-            console.log('Error details:', error.message);
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            
+            // Show a more user-friendly error message
+            if (error.name === 'NotSupportedError') {
+                console.log('The audio format is not supported by your browser.');
+                
+                // If this is an AIFF file, try with conversion as a last resort
+                if (requestUrl.includes('audio/aiff') || requestUrl.toLowerCase().endsWith('.aiff')) {
+                    const conversionUrl = requestUrl.includes('?') 
+                        ? `${requestUrl}&convert_format=mp3` 
+                        : `${requestUrl}?convert_format=mp3`;
+                        
+                    console.log('Trying again with conversion to MP3:', conversionUrl);
+                    try {
+                        currentAudio = new Audio(conversionUrl);
+                        await currentAudio.play();
+                        console.log('Playback with conversion successful');
+                        return;
+                    } catch (convError) {
+                        console.error('Conversion attempt also failed:', convError);
+                        alert('Your browser does not support AIFF audio files. Please use Safari or convert the sound to MP3 or WAV format.');
+                    }
+                } else {
+                    alert('This audio format is not supported by your browser. Please try a different sound or use a different browser.');
+                }
+            } else if (error.name === 'NotAllowedError') {
+                console.log('The browser blocked autoplay. User interaction might be required first');
+            }
+            
+            // Make an explicit fetch request to check if the file is accessible
+            fetch(requestUrl)
+                .then(response => {
+                    console.log('Fetch response status:', response.status);
+                    console.log('Fetch response headers:', Array.from(response.headers.entries()));
+                    if (!response.ok) {
+                        console.error(`File fetch failed with status: ${response.status}`);
+                    } else {
+                        console.log('File exists and is accessible');
+                        // Check content type
+                        const contentType = response.headers.get('content-type');
+                        console.log('Content-Type:', contentType);
+                        
+                        // If it's an AIFF file, suggest conversion
+                        if (contentType && contentType.includes('audio/aiff')) {
+                            console.log('This is an AIFF file. Using conversion parameter might help.');
+                        }
+                    }
+                })
+                .catch(fetchError => {
+                    console.error('Failed to fetch the sound file:', fetchError);
+                });
         }
     }
     

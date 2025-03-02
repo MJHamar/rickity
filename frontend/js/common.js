@@ -62,6 +62,6 @@ function hhmmssToSeconds(hhmmss) {
 function getVersionedJsPath(jsFilePath) {
     // In production, use a fixed version number that changes only when files are updated
     // This version should be updated during deployment or release process
-    const APP_VERSION = '1.1.0';
+    const APP_VERSION = '1.1.1';
     return `${jsFilePath}?v=${APP_VERSION}`;
 }

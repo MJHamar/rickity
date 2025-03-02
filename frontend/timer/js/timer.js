@@ -2,6 +2,42 @@ $(document).ready(function() {
     let availableSounds = [];
     let currentAudio = null;
 
+    // Check if an audio format is supported by the browser
+    function isAudioFormatSupported(mimeType) {
+        const audio = document.createElement('audio');
+        return audio.canPlayType(mimeType) !== '';
+    }
+
+    // Check if AIFF format is supported
+    const isAiffSupported = isAudioFormatSupported('audio/aiff');
+    console.log('Browser supports AIFF format:', isAiffSupported);
+
+    // Check browser audio format support
+    function getBestSupportedFormat() {
+        const formats = {
+            mp3: isAudioFormatSupported('audio/mpeg'),
+            wav: isAudioFormatSupported('audio/wav'),
+            ogg: isAudioFormatSupported('audio/ogg'),
+            aiff: isAudioFormatSupported('audio/aiff')
+        };
+        
+        console.log('Browser audio format support:', formats);
+        
+        // Return the first supported format in order of preference
+        if (formats.mp3) return 'mp3';
+        if (formats.wav) return 'wav';
+        if (formats.ogg) return 'ogg';
+        if (formats.aiff) return 'aiff';
+        
+        // Fallback to MP3 if nothing is explicitly supported
+        return 'mp3';
+    }
+
+    // Log browser audio support on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        getBestSupportedFormat();
+    });
+
     // Fetch all sounds from the API
     async function fetchSounds() {
         try {
@@ -31,7 +67,7 @@ $(document).ready(function() {
         });
     }
 
-    // Play a sound preview
+    // Play a sound
     async function playSound(soundId) {
         if (!soundId) return;
         
@@ -42,12 +78,88 @@ $(document).ready(function() {
         }
         
         try {
+            console.log(`Attempting to play sound with ID: ${soundId}`);
+            
+            // Determine if we need format conversion based on browser support
+            let requestUrl = `${API_URL}/timer/sounds/${soundId}`;
+            const browserSupport = {
+                aiff: isAudioFormatSupported('audio/aiff'),
+                mp3: isAudioFormatSupported('audio/mpeg'),
+                wav: isAudioFormatSupported('audio/wav')
+            };
+            
+            // If browser doesn't support AIFF, request conversion
+            if (!browserSupport.aiff && browserSupport.mp3) {
+                // First make a HEAD request to check if it's an AIFF file
+                try {
+                    const response = await fetch(requestUrl, { method: 'HEAD' });
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (contentType && contentType.includes('audio/aiff')) {
+                        console.log('AIFF file detected and browser does not support AIFF. Requesting MP3 conversion.');
+                        requestUrl += '?convert_format=mp3';
+                    }
+                } catch (error) {
+                    console.error('Error checking file type:', error);
+                }
+            }
+            
+            console.log(`Sound URL: ${requestUrl}`);
+            
             // Create a new audio element
-            currentAudio = new Audio(`${API_URL}/timer/sounds/${soundId}`);
+            currentAudio = new Audio();
+            
+            // Set up error handling before setting the source
+            currentAudio.addEventListener('error', (e) => {
+                console.error('Audio error event:', e);
+                if (currentAudio.error) {
+                    console.error('Audio error code:', currentAudio.error.code);
+                    console.error('Audio error message:', currentAudio.error.message);
+                }
+            });
+            
+            // Wait for the audio to be loaded before playing
+            currentAudio.addEventListener('canplaythrough', () => {
+                console.log('Audio can play through - ready to play');
+            });
+            
+            // Set source and try to play the audio
+            currentAudio.src = requestUrl;
+            
+            // Try to play the audio
             await currentAudio.play();
+            console.log('Audio playback started successfully');
         } catch (error) {
             console.error('Error playing sound:', error);
-            alert('Failed to play sound. Please try again.');
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            
+            // Show a more user-friendly error message
+            if (error.name === 'NotSupportedError') {
+                console.log('The audio format is not supported by your browser.');
+                
+                // Try with conversion as a last resort if it's an AIFF file
+                if (requestUrl.includes('audio/aiff') || requestUrl.toLowerCase().endsWith('.aiff')) {
+                    const conversionUrl = requestUrl.includes('?') 
+                        ? `${requestUrl}&convert_format=mp3` 
+                        : `${requestUrl}?convert_format=mp3`;
+                        
+                    console.log('Trying again with conversion to MP3:', conversionUrl);
+                    try {
+                        currentAudio = new Audio(conversionUrl);
+                        await currentAudio.play();
+                        console.log('Playback with conversion successful');
+                        return;
+                    } catch (convError) {
+                        console.error('Conversion attempt also failed:', convError);
+                        alert('Your browser does not support AIFF audio files. Please use Safari or convert the sound to MP3 or WAV format.');
+                    }
+                } else {
+                    alert('This audio format is not supported by your browser. Please try a different sound or use a different browser.');
+                }
+            } else if (error.name === 'NotAllowedError') {
+                console.log('The browser blocked autoplay. User interaction might be required first');
+            }
         }
     }
 

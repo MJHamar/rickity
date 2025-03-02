@@ -1,19 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Response
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Response, Query, Request
 from sqlalchemy.orm import Session
-from typing import List, Dict
+from typing import List, Dict, Optional
 from uuid import UUID
 import json
 import os
 from starlette.responses import FileResponse
+from starlette.background import BackgroundTask
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import glob
+from pathlib import Path
+import subprocess
+import tempfile
+import shutil
+import logging
 
 from timer.database.database import get_db
 from timer.models import Timer, TimerCreate, Sound
 from timer.repositories.timer_repository import TimerRepository
 from timer.repositories.sound_repository import SoundRepository
 from timer.websocket_manager import timer_manager
-
+from timer.timer_manager import TimerManager, get_timer_manager
+from timer.audio_utils import is_valid_audio_file
 from utils.logging import setup_logger
+from auth.dependencies import get_current_user
+
 logger = setup_logger(__name__)
 
 router = APIRouter()
@@ -27,7 +38,11 @@ async def get_sounds(db: Session = Depends(get_db)):
     return repo.get_sounds()
 
 @router.get("/sounds/{sound_id}")
-async def get_sound_file(sound_id: UUID, db: Session = Depends(get_db)):
+async def get_sound_file(
+    sound_id: UUID, 
+    convert_format: Optional[str] = Query(None, description="Format to convert to (mp3, wav)"),
+    db: Session = Depends(get_db)
+):
     """Get a sound file by ID"""
     logger.info(f"Fetching sound file for ID: {sound_id}")
     repo = SoundRepository(db)
@@ -46,9 +61,65 @@ async def get_sound_file(sound_id: UUID, db: Session = Depends(get_db)):
             detail=f"Sound file {sound.file} not found"
         )
     
+    # Determine the correct media type based on file extension
+    file_ext = os.path.splitext(sound.file)[1].lower()
+    media_type = "audio/mpeg"  # Default to MP3
+    
+    if file_ext == ".aiff" or file_ext == ".aif":
+        media_type = "audio/aiff"
+    elif file_ext == ".wav":
+        media_type = "audio/wav"
+    elif file_ext == ".ogg":
+        media_type = "audio/ogg"
+    elif file_ext == ".mp3":
+        media_type = "audio/mpeg"
+    
+    # Log the file and media type for debugging
+    logger.info(f"Serving sound file: {sound.file} with media type: {media_type}")
+    
+    # Check if format conversion is requested
+    if convert_format and file_ext in ['.aiff', '.aif'] and convert_format.lower() in ['mp3', 'wav']:
+        try:
+            # Create a temporary file for the converted audio
+            with tempfile.NamedTemporaryFile(suffix=f'.{convert_format.lower()}', delete=False) as tmp_file:
+                tmp_path = tmp_file.name
+            
+            try:
+                # Attempt to run ffmpeg to convert the file
+                logger.info(f"Converting {file_ext} to {convert_format} using ffmpeg")
+                subprocess.run(
+                    ['ffmpeg', '-i', sound.file, '-y', tmp_path],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                
+                # Update media type based on conversion format
+                if convert_format.lower() == 'mp3':
+                    media_type = "audio/mpeg"
+                elif convert_format.lower() == 'wav':
+                    media_type = "audio/wav"
+                
+                # Return the converted file
+                logger.info(f"Serving converted sound file: {tmp_path} with media type: {media_type}")
+                return FileResponse(
+                    tmp_path,
+                    media_type=media_type,
+                    filename=f"{os.path.splitext(os.path.basename(sound.file))[0]}.{convert_format.lower()}",
+                    background=BackgroundTask(lambda: os.unlink(tmp_path) if os.path.exists(tmp_path) else None)
+                )
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                logger.error(f"Failed to convert audio: {str(e)}")
+                # If conversion fails, fall back to original file
+                pass
+        except Exception as e:
+            logger.error(f"Error during audio conversion: {str(e)}")
+            # Fall back to original file
+    
+    # Return the original file if no conversion or conversion failed
     return FileResponse(
         sound.file,
-        media_type="application/octet-stream",
+        media_type=media_type,
         filename=os.path.basename(sound.file)
     )
 
