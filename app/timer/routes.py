@@ -128,7 +128,12 @@ async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = 
                                     # Get current timer state to get the new duration in seconds
                                     timer_state = timer_manager.active_timers.get(timer_id)
                                     if timer_state:
-                                        repo.update_timer(UUID(timer_id), duration=timer_state.duration)
+                                        # Create a TimerCreate object with the current name and new duration
+                                        timer_update = TimerCreate(
+                                            name=updated_timer.name,
+                                            duration=timer_state.duration
+                                        )
+                                        repo.update_timer(UUID(timer_id), timer_update)
                         except ValueError as e:
                             logger.error(f"Error setting timer value: {e}")
                 else:
