@@ -7,23 +7,15 @@ import os
 from starlette.responses import FileResponse
 from starlette.background import BackgroundTask
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-import glob
-from pathlib import Path
 import subprocess
 import tempfile
-import shutil
-import logging
 
 from timer.database.database import get_db
 from timer.models import Timer, TimerCreate, Sound
 from timer.repositories.timer_repository import TimerRepository
 from timer.repositories.sound_repository import SoundRepository
 from timer.websocket_manager import timer_manager
-from timer.timer_manager import TimerManager, get_timer_manager
-from timer.audio_utils import is_valid_audio_file
 from utils.logging import setup_logger
-from auth.dependencies import get_current_user
 
 logger = setup_logger(__name__)
 
