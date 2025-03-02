@@ -187,9 +187,13 @@ class TimerManager:
         dead_sockets = set()
         
         # Prepare the notification data
-        timer_data = timer.to_dict()
+        timer_data = {
+            "timer_state": timer.seconds_to_hhmmss(int(timer.remaining)),
+            "timer_status": timer.status
+        }
         if play_sound and timer.status == "finished":
             timer_data["play_sound"] = True
+            timer_data["sound_id"] = timer.sound_id
         
         for websocket in timer.subscribers:
             try:

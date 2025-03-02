@@ -1,4 +1,5 @@
 node_modules
+api/*.db
 api/Cargo.lock
 api/target
 api/config.ini

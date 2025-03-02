@@ -319,7 +319,7 @@ $(document).ready(function() {
             if (!browserSupport.aiff && browserSupport.mp3) {
                 // First make a HEAD request to check if it's an AIFF file
                 try {
-                    const response = await fetch(requestUrl, { method: 'HEAD' });
+                    const response = await fetch(requestUrl, { method: 'GET' });
                     const contentType = response.headers.get('content-type');
                     
                     if (contentType && contentType.includes('audio/aiff')) {
