@@ -114,6 +114,23 @@ async def websocket_endpoint(websocket: WebSocket, timer_id: str, db: Session = 
                     await timer_manager.stop_timer(timer_id)
                 elif action == "resume":
                     await timer_manager.resume_timer(timer_id)
+                # Handle 'set' command for updating timer value
+                elif 'set' in command:
+                    new_time = command.get('set')
+                    if new_time and isinstance(new_time, str):
+                        try:
+                            # Update timer value
+                            success = await timer_manager.set_timer_value(timer_id, new_time)
+                            if success:
+                                # If successful, also update in the database
+                                updated_timer = repo.get_timer(UUID(timer_id))
+                                if updated_timer:
+                                    # Get current timer state to get the new duration in seconds
+                                    timer_state = timer_manager.active_timers.get(timer_id)
+                                    if timer_state:
+                                        repo.update_timer(UUID(timer_id), duration=timer_state.duration)
+                        except ValueError as e:
+                            logger.error(f"Error setting timer value: {e}")
                 else:
                     logger.warning(f"Unknown action: {action}")
             except json.JSONDecodeError:

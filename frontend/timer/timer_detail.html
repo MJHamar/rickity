@@ -8,6 +8,31 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../js/common.js"></script>
     <script src="js/timer_detail.js"></script>
+    <style>
+        .timer-time {
+            font-size: 3em;
+            margin: 20px 0;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .time-segment {
+            display: inline-block;
+            min-width: 1.2em;
+            text-align: center;
+        }
+        .time-segment.editable {
+            border-bottom: 2px solid #ccc;
+            cursor: text;
+        }
+        .time-segment.editable:focus {
+            outline: none;
+            border-bottom: 2px solid #2196F3;
+        }
+        .time-separator {
+            display: inline-block;
+            margin: 0 5px;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -22,7 +47,13 @@
         <div class="timer-display">
             <h2 id="timer-name">Loading Timer...</h2>
             
-            <div class="timer-time" id="timer-time">00:00:00</div>
+            <div class="timer-time" id="timer-time">
+                <span id="hours" class="time-segment" data-type="hours">00</span>
+                <span class="time-separator">:</span>
+                <span id="minutes" class="time-segment" data-type="minutes">00</span>
+                <span class="time-separator">:</span>
+                <span id="seconds" class="time-segment" data-type="seconds">00</span>
+            </div>
             
             <div class="timer-status" id="timer-status">Loading...</div>
             

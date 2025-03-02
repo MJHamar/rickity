@@ -20,13 +20,30 @@ class TimerState:
         self.start_time: Optional[datetime] = None
         self.pause_time: Optional[datetime] = None
     
+    def seconds_to_hhmmss(self, seconds: int) -> str:
+        """Convert seconds to HHmmss format"""
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02d}{minutes:02d}{seconds:02d}"
+    
+    def hhmmss_to_seconds(self, hhmmss: str) -> int:
+        """Convert HHmmss format to seconds"""
+        if len(hhmmss) != 6:
+            raise ValueError("Time must be in HHmmss format")
+        
+        hours = int(hhmmss[0:2])
+        minutes = int(hhmmss[2:4])
+        seconds = int(hhmmss[4:6])
+        
+        return hours * 3600 + minutes * 60 + seconds
+    
     def to_dict(self):
         return {
             "timer_id": self.timer_id,
             "name": self.name,
-            "duration": self.duration,
-            "remaining": self.remaining,
-            "status": self.status,
+            "duration": self.seconds_to_hhmmss(self.duration),
+            "timer_state": self.seconds_to_hhmmss(self.remaining),
+            "timer_status": self.status,
             "subscribers": len(self.subscribers)
         }
 
@@ -178,7 +195,7 @@ class TimerManager:
             
         timer = self.active_timers[timer_id]
         message = {
-            "timer_state": int(timer.remaining),
+            "timer_state": timer.seconds_to_hhmmss(int(timer.remaining)),
             "timer_status": timer.status
         }
         await websocket.send_text(json.dumps(message))
@@ -186,6 +203,33 @@ class TimerManager:
     def get_active_timers(self):
         """Get all active timers"""
         return {timer_id: timer.to_dict() for timer_id, timer in self.active_timers.items()}
+    
+    async def set_timer_value(self, timer_id: str, hhmmss: str):
+        """Set a new value for the timer"""
+        if timer_id not in self.active_timers:
+            raise ValueError(f"Timer {timer_id} not found")
+        
+        timer = self.active_timers[timer_id]
+        
+        # Only allow changing the timer if it's not running
+        if timer.status == "rolling":
+            raise ValueError("Cannot change timer value while it is running")
+            
+        try:
+            # Convert HHmmss to seconds
+            new_seconds = timer.hhmmss_to_seconds(hhmmss)
+            
+            # Update timer values
+            timer.duration = new_seconds
+            timer.remaining = new_seconds
+            
+            # Notify subscribers about the state change
+            await self._notify_subscribers(timer_id)
+            
+            return True
+        except ValueError as e:
+            logger.error(f"Error setting timer value: {e}")
+            return False
 
 # Create a global instance of the timer manager
 timer_manager = TimerManager()

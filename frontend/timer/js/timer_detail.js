@@ -7,10 +7,11 @@ $(document).ready(function() {
     // WebSocket connection
     let socket = null;
     let timerState = {
-        timer_state: 0,
+        timer_state: "000000",
         timer_status: 'stopped'
     };
     let previousStatus = 'stopped';
+    let timerUpdateTimeout = null;
     
     // Update UI with timer information
     function updateTimerInfo() {
@@ -55,10 +56,53 @@ $(document).ready(function() {
         }, 1500);
     }
     
+    // Parse HHmmss format to display as HH:mm:ss
+    function parseTimerFormat(hhmmss) {
+        if (!hhmmss || typeof hhmmss !== 'string' || hhmmss.length !== 6) {
+            return { hours: '00', minutes: '00', seconds: '00' };
+        }
+        
+        return {
+            hours: hhmmss.substring(0, 2),
+            minutes: hhmmss.substring(2, 4),
+            seconds: hhmmss.substring(4, 6)
+        };
+    }
+    
+    // Convert display format (HH:mm:ss) to internal format (HHmmss)
+    function getTimerValue() {
+        const hours = $('#hours').text().padStart(2, '0');
+        const minutes = $('#minutes').text().padStart(2, '0');
+        const seconds = $('#seconds').text().padStart(2, '0');
+        
+        return hours + minutes + seconds;
+    }
+    
+    // Make timer segments editable or non-editable based on timer status
+    function updateTimerEditability() {
+        const isEditable = timerState.timer_status !== 'rolling';
+        
+        $('.time-segment').each(function() {
+            if (isEditable) {
+                $(this).addClass('editable').attr('contenteditable', 'true');
+            } else {
+                $(this).removeClass('editable').removeAttr('contenteditable');
+            }
+        });
+    }
+    
     // Update timer display
     function updateTimerDisplay() {
-        // Update time display
-        $('#timer-time').text(formatTime(timerState.timer_state));
+        // Parse timer state (HHmmss format)
+        const timeComponents = parseTimerFormat(timerState.timer_state);
+        
+        // Update time segments
+        $('#hours').text(timeComponents.hours);
+        $('#minutes').text(timeComponents.minutes);
+        $('#seconds').text(timeComponents.seconds);
+        
+        // Update timer editability
+        updateTimerEditability();
         
         // Update status text and class
         const statusElement = $('#timer-status');
@@ -114,7 +158,7 @@ $(document).ready(function() {
         }
     }
 
-    // Parse WebSocket message format "{'timer_state': <timer_state> 'timer_status': <timer_status>}" (used by timer module)
+    // Parse WebSocket message
     function parseTimerMessage(message) {
         const parsedMessage = JSON.parse(message);
         return parsedMessage;
@@ -172,6 +216,28 @@ $(document).ready(function() {
         }
     }
     
+    // Send set timer command with debounce
+    function sendTimerUpdate() {
+        // Clear any existing timeout
+        if (timerUpdateTimeout) {
+            clearTimeout(timerUpdateTimeout);
+        }
+        
+        // Set a new timeout - only send after 300ms of no changes
+        timerUpdateTimeout = setTimeout(function() {
+            const timerValue = getTimerValue();
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ set: timerValue }));
+                console.log('Sending timer update:', timerValue);
+            } else {
+                console.error('WebSocket not connected');
+                alert('Connection lost. Trying to reconnect...');
+                initializeWebSocket();
+            }
+        }, 300);
+    }
+    
     // Handle toggle button click (pause/continue)
     $('#toggle-button').click(function() {
         if (timerState.timer_status === 'rolling') {
@@ -186,6 +252,46 @@ $(document).ready(function() {
     // Handle reset button click
     $('#reset-button').click(function() {
         sendCommand('stop');
+    });
+    
+    // Handle timer value changes
+    $(document).on('focus', '.time-segment', function() {
+        // Select all text when focused
+        const range = document.createRange();
+        range.selectNodeContents(this);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    });
+    
+    $(document).on('input', '.time-segment', function() {
+        const type = $(this).data('type');
+        let value = $(this).text().replace(/\D/g, ''); // Remove non-digits
+        
+        // Apply limits based on segment type
+        if (type === 'hours') {
+            // No specific limit for hours, but keep it 2 digits
+            if (value.length > 2) value = value.substring(0, 2);
+        } else if (type === 'minutes' || type === 'seconds') {
+            // Limit to 0-59
+            if (value.length > 2) value = value.substring(0, 2);
+            if (parseInt(value) > 59) value = '59';
+        }
+        
+        // Update the segment text
+        $(this).text(value.padStart(2, '0'));
+        
+        // Trigger update after change
+        sendTimerUpdate();
+    });
+    
+    // Handle paste to strip formatting and non-numeric characters
+    $(document).on('paste', '.time-segment', function(e) {
+        e.preventDefault();
+        const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+        const pastedText = clipboardData.getData('text');
+        const numericText = pastedText.replace(/\D/g, '');
+        document.execCommand('insertText', false, numericText);
     });
     
     // Set a flag when leaving the page to prevent reconnect attempts
