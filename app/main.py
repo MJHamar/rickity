@@ -36,6 +36,10 @@ Base.metadata.create_all(bind=engine)
 TimerBase.metadata.create_all(bind=timer_engine)
 logger.info("Database tables created")
 
+@app.get("/openapi.json", include_in_schema=False)
+def get_openapi_json():
+    return app.openapi()
+
 @app.get("/habits", response_model=List[Habit])
 def get_habits(db: Session = Depends(get_db)):
     logger.info("Fetching all habits")
