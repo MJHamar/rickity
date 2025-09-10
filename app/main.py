@@ -46,6 +46,15 @@ def get_habits(db: Session = Depends(get_db)):
     repo = HabitRepository(db)
     return repo.get_habits()
 
+@app.get("/habits/{habit_id}", response_model=Habit)
+def get_habit(habit_id: UUID, db: Session = Depends(get_db)):
+    repo = HabitRepository(db)
+    habit = repo.get_habit(habit_id)
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+    return habit
+
+
 @app.post("/habits", response_model=Habit)
 def create_habit(habit: HabitCreate, db: Session = Depends(get_db)):
     logger.info(f"Creating new habit: {habit.name}")

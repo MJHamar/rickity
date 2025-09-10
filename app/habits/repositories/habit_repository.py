@@ -48,7 +48,8 @@ class HabitRepository:
         return db_habit
 
     def get_habit(self, habit_id: UUID) -> Optional[Habit]:
-        return self.db.query(Habit).filter(Habit.id == habit_id).first()
+        return self.db.query(Habit).filter(Habit.id == str(habit_id)).first()
+
 
     def update_habit(self, habit_id: UUID, habit: HabitCreate) -> Optional[Habit]:
         # Validate recurrence format
