@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    environment:
+      # Expose a configurable backend port; default to 8000 if not set
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+    # Map the configured host port to the container port (both use the same env var)
+    ports:
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
+    # Mount code for convenience during development. Remove or change to a named volume for production.
+    volumes:
+      - ./app:/app:rw
+    # Override the default command so uvicorn uses the configured BACKEND_PORT
+    command: uvicorn main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000}
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+      # Serve the static frontend directory from nginx
+      - ./frontend:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+# Optionally define networks here if you want to separate services
+networks:
+  default:
+    name: rickity_default

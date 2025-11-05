@@ -6,3 +6,4 @@ api/config.ini
 web/src/config.js
 .vscode
 **/.venv
+**/__pycache__
