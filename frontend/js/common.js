@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:2233';
+const API_URL = 'http://34.118.9.222:2233';
 
 /**
  * Utility functions used across multiple modules
