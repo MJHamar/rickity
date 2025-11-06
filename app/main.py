@@ -46,7 +46,7 @@ def get_habits(db: Session = Depends(get_db)):
     repo = HabitRepository(db)
     return repo.get_habits()
 
-@app.get("/habits/{habit_id}", response_model=Habit)
+@app.get("/habits/{habit_id}/get", response_model=Habit)
 def get_habit(habit_id: UUID, db: Session = Depends(get_db)):
     repo = HabitRepository(db)
     habit = repo.get_habit(habit_id)
@@ -71,7 +71,7 @@ def create_habit(habit: HabitCreate, db: Session = Depends(get_db)):
             detail=str(e)
         )
 
-@app.put("/habits/{habit_id}", response_model=Habit)
+@app.put("/habits/{habit_id}/update", response_model=Habit)
 def update_habit(habit_id: UUID, habit: HabitCreate, db: Session = Depends(get_db)):
     repo = HabitRepository(db)
     try:
@@ -86,7 +86,7 @@ def update_habit(habit_id: UUID, habit: HabitCreate, db: Session = Depends(get_d
             detail=str(e)
         )
 
-@app.delete("/habits/{habit_id}")
+@app.delete("/habits/{habit_id}/delete")
 def delete_habit(habit_id: UUID, db: Session = Depends(get_db)):
     repo = HabitRepository(db)
     if not repo.delete_habit(habit_id):
